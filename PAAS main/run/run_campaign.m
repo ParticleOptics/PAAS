@@ -2,7 +2,7 @@ clear; close all;
 addpath(genpath(pwd))
 
 instrument_SN = "PAAS_4L_02_005";
-campaign      = "Hyytiala_Phase2";
+campaign      = "Pallas"; % Hyytiala_Phase2
 corr_method   = 3; % method to calculate b_abs
 
 time_av = 6; % in hours
@@ -22,6 +22,7 @@ paas = apply_raw_corrections(paas, cfg);  % corrections to raw signal
 
 %% 4. Possible data corrections
 b_abs = apply_corrections(b_abs,time,cfg);
+b_abs = correct_to_stp(b_abs, time, paas, true);
 
 %% 5. Compute statistics
 TT_statistics = compute_statistics(time,b_abs,laser_wavelength, time_av);

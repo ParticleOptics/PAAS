@@ -1,15 +1,32 @@
 %% PAAS NO2 CALIBRATION ANALYSIS
+% This script loads NO2 calibration measurement data and applies the
+% configured analysis workflow.
+%
+% The following parameters are loaded from the dataset entry in
+% calibration_periods.json:
+%   - filename             : calibration data file name
+%   - do_phase_correction  : whether to apply phase correction
+%   - phase_angle_target   : target phase angle for phase rotation
+%   - wavelength           : laser wavelengths used in this dataset
+%   - NO2_Cabs             : NO2 absorption cross sections for configured wavelengths
+%   - bottle_conc          : NO2 source concentration in ppb
+%   - total_flow           : total flow rate in standard units
+%   - NO2_flow             : NO2 flow sequence for each measurement point
+%   - freq_scan            : frequency scan file used for resonance correction
+%   - background           : background time periods
+%   - NO2_periods          : measurement time periods
+%
+% Configuration values that are not present in JSON fall back to hard-coded
+% defaults here in the script.
+
 clear; close all; clc;
 
 %% CONFIGURATION
 folder       = '/Users/emma/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/NO2 calibration/data/';
 savefolder   = '/Users/emma/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/NO2 calibration/plots/';
-dataset_date = "2026-04-01";
+dataset_date = "2026-07-08";
 
-do_phase_correction      = false;
-phase_angle_target       = 229+31;
-
-do_frequency_correction      = false; % this was used in NO2 in N2 and air calibration
+do_frequency_correction      = true; % this was used in NO2 in N2 and air calibration
 select_periods_interactively = false; % you can select periods, but adding them to json is broken
 
 
@@ -22,6 +39,19 @@ period_file  = 'calibration_periods.json';
 db = jsondecode(fileread(period_file));
 dataset_key = matlab.lang.makeValidName(dataset_date);
 cfg = db.datasets.(dataset_key);
+
+% Load optional config from JSON entry
+if isfield(cfg,'do_phase_correction')
+    do_phase_correction = cfg.do_phase_correction;
+else
+    do_phase_correction = true;
+end
+
+if isfield(cfg,'phase_angle_target')
+    phase_angle_target = cfg.phase_angle_target;
+else
+    phase_angle_target = 229+34;
+end
 
 %% Load calibration data
 paas = readtimetable(fullfile(folder,cfg.filename));
