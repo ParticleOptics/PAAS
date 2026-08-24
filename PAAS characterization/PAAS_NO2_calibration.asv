@@ -25,7 +25,7 @@ clear; close all; clc;
 homeDir = char(java.lang.System.getProperty('user.home'));
 folder       = fullfile(homeDir,'Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/NO2 calibration/data/');
 savefolder   = fullfile(homeDir,'Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/NO2 calibration/plots/');
-dataset_date = "2026-03-09";
+dataset_date = "2026-03-10";
 
 select_periods_interactively = false; % you can select periods, but adding them to json is broken
 
@@ -355,34 +355,14 @@ exportgraphics(gcf, fname, 'Resolution', 300);
 %% Point calibration
 if strcmp(cfg.calibration_type,'point')
 
-    for i = 1:n_laser
-
-        wl = unique_wl(i);
-
-        % Calculation of NO2 absorption coefficient 
-        b_abs_NO2 = NO2_absorption(T, p, NO2_ppb, NO2_Cabs(wavelength==wl));
-        % Correct for quantum yield for 405 nm
-        if wl == 405
-            b_abs_NO2 = b_abs_NO2 .* (1-yield);
-        else
-            b_abs_NO2 = b_abs_NO2;
-        end
-
-        C_cell = nanmean(S_corr(i,:) ./ b_abs_NO2');
-        txt = sprintf('Cell constant at %d nm = %.0f\n', wl, C_cell);
-        disp(txt)
-    end
-
-end
-
 
 %% Ramped calibration
-if strcmp(cfg.calibration_type,'ramped')
-
+if strcmp(cfg.calibration_type,'point')
+    
 figure('Units','centimeters','Position',[2 3.5 46 17])
 tiledlayout(1,2,'TileSpacing','compact','Padding','compact')
 
-% Initialize data dump variable
+% Initialise data dump variable
 calibration_data = struct([]);
 
 for i = 1:n_laser
@@ -475,7 +455,6 @@ exportgraphics(gcf,...
 save(fullfile(savefolder,...
     sprintf('Calibration_%s.mat',dataset_date)), ...
     'calibration_data')
-end
 
 
 %% FUNCTIONS

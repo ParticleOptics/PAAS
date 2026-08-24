@@ -2,19 +2,25 @@
   "datasets": {
     "x2026_03_09": {
       "filename": "paas_005_calib_260309.csv",
-      "NO2_babs_1ppm": [
-        1.412E-6,
-        5.4921E-7,
-        1.6262E-8
+      "calibration_type": "point",
+      "do_phase_correction": true,
+      "phase_angle_target": 228,
+      "freq_scan": "~/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20260309_183710_515nm_10Hz.mat",
+      "do_frequency_correction": true,
+      "NO2_Cabs": [
+        5.647E-19,
+        2.1964E-19,
+        6.5037E-21
+      ],
+      "wavelength": [
+        405,
+        515,
+        660
       ],
       "bottle_conc": 540,
       "total_flow": 1.5,
       "NO2_flow": [
         1.5,
-        0.3,
-        0.6,
-        0.9,
-        1.2,
         1.5
       ],
       "background": [
@@ -29,22 +35,6 @@
           "2026-03-09 16:31:14"
         ],
         [
-          "2026-03-09 16:33:46",
-          "2026-03-09 16:41:02"
-        ],
-        [
-          "2026-03-09 16:43:20",
-          "2026-03-09 17:32:17"
-        ],
-        [
-          "2026-03-09 17:34:56",
-          "2026-03-09 17:45:46"
-        ],
-        [
-          "2026-03-09 17:46:00",
-          "2026-03-09 17:55:19"
-        ],
-        [
           "2026-03-09 17:57:17",
           "2026-03-09 18:06:23"
         ]
@@ -52,19 +42,23 @@
     },
     "x2026_03_10": {
       "filename": "paas_005_calib_260310.csv",
-      "NO2_babs_1ppm": [
-        1.412E-6,
-        5.4921E-7,
-        1.6262E-8
+      "calibration_type": "point",
+      "do_phase_correction": true,
+      "phase_angle_target": 220,
+      "NO2_Cabs": [
+        5.647E-19,
+        2.1964E-19,
+        6.5037E-21
+      ],
+      "wavelength": [
+        405,
+        515,
+        660
       ],
       "bottle_conc": 540,
       "total_flow": 1.5,
       "NO2_flow": [
         1.5,
-        0.3,
-        0.6,
-        0.9,
-        1.2,
         1.5
       ],
       "background": [
@@ -83,22 +77,6 @@
           "2026-03-10 12:11:48"
         ],
         [
-          "2026-03-10 12:15:57",
-          "2026-03-10 12:25:16"
-        ],
-        [
-          "2026-03-10 12:27:42",
-          "2026-03-10 12:39:06"
-        ],
-        [
-          "2026-03-10 12:40:08",
-          "2026-03-10 12:50:30"
-        ],
-        [
-          "2026-03-10 12:52:14",
-          "2026-03-10 13:00:11"
-        ],
-        [
           "2026-03-10 13:03:38",
           "2026-03-10 13:11:56"
         ]
@@ -106,6 +84,9 @@
     },
     "x2026_04_01": {
       "filename": "paas_005_calib_260401.csv",
+      "calibration_type": "ramped",
+      "do_phase_correction": true,
+      "phase_angle_target": 228,
       "NO2_Cabs": [
         5.647E-19,
         2.1964E-19,
@@ -161,6 +142,7 @@
     },
     "x2026_05_22": {
       "filename": "paas_005_calib_260522.csv",
+      "calibration_type": "ramped",
       "NO2_Cabs": [
         5.647E-19,
         2.1964E-19,
@@ -181,7 +163,8 @@
         1.2,
         1.5
       ],
-      "freq_scan": "/Users/emma/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20260522_105416_515nm_05Hz.mat",
+      "freq_scan": "~/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20260522_105416_515nm_05Hz.mat",
+      "do_frequency_correction": true,
       "background": [
         "2026-05-22 12:40:21",
         "2026-05-22 12:52:17"
@@ -215,6 +198,7 @@
     },
     "x2026_05_22_660nm": {
       "filename": "paas_005_calib_260522_660nm.csv",
+      "calibration_type": "ramped",
       "NO2_Cabs": [
         5.647E-19,
         2.1964E-19,
@@ -231,7 +215,8 @@
         1.5,
         1.5
       ],
-      "freq_scan": "/Users/emma/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20260522_105416_515nm_05Hz.mat",
+      "freq_scan": "~/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20260522_105416_515nm_05Hz.mat",
+      "do_frequency_correction": true,
       "background": [
         [
           "2026-05-22 13:11:12",
@@ -255,6 +240,7 @@
     },
     "x2026_07_08": {
       "filename": "paas_005_calib_260708.csv",
+      "calibration_type": "ramped",
       "wavelength": [
         405,
         515
@@ -275,7 +261,8 @@
       ],
       "do_phase_correction": true,
       "phase_angle_target": 263,
-      "freq_scan": "/Users/emma/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20260708_095822_515nm_05Hz.mat",
+      "freq_scan": "~/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20260708_095822_515nm_05Hz.mat",
+      "do_frequency_correction": true,
       "background": [
         [
           "2026-07-08 10:21:10",

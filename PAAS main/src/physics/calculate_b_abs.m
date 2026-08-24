@@ -40,7 +40,7 @@ end
 
 % Remove instrument start segments until valid BG
 % (Both Relays 0) -> THIS DOES NOT WORK FOR PALLAS
-% paas = remove_start_segments(paas, valve_functionality);
+paas = remove_start_segments(paas, valve_functionality);
 
 % Calculate f
 f = paas.Calibration_Gain ./ paas.Lockin_Gain;

@@ -1,24 +1,24 @@
 {
   "PAAS-4L-02-005": {
     "Hyytiala": {
-      "data_root": "/Users/emma/Documents/Field campaigns/Hyytiala/Data/PAAS",
+      "data_root": "/Users/xqv896/Documents/Field campaigns/Hyytiala/Data/PAAS",
       "data_subfolder": "raw data weekly",
-      "output_root_plots": "/Users/emma/Documents/Field campaigns/Hyytiala/Data/PAAS/plots",
-      "output_root_data": "/Users/emma/Documents/Field campaigns/Hyytiala/Data/PAAS"
+      "output_root_plots": "/Users/xqv896/Documents/Field campaigns/Hyytiala/Data/PAAS/plots",
+      "output_root_data": "/Users/xqv896/Documents/Field campaigns/Hyytiala/Data/PAAS"
     },
 
     "Hyytiala_Phase2": {
-      "data_root": "/Users/emma/Documents/Field campaigns/Hyytiala/Data/PAAS",
+      "data_root": "/Users/xqv896/Documents/Field campaigns/Hyytiala/Data/PAAS",
       "data_subfolder": "raw data weekly new wavelength",
-      "output_root_plots": "/Users/emma/Documents/Field campaigns/Hyytiala/Data/PAAS/plots",
-      "output_root_data": "/Users/emma/Documents/Field campaigns/Hyytiala/Data/PAAS"
+      "output_root_plots": "/Users/xqv896/Documents/Field campaigns/Hyytiala/Data/PAAS/plots",
+      "output_root_data": "/Users/xqv896/Documents/Field campaigns/Hyytiala/Data/PAAS"
     },
 
     "Pallas": {
-      "data_root": "/Users/emma/Documents/Field campaigns/Pallas/Data/PAAS",
+      "data_root": "/Users/xqv896/Documents/Field campaigns/Pallas/Data/PAAS",
       "data_subfolder": "raw data weekly",
-      "output_root_plots": "/Users/emma/Documents/Field campaigns/Pallas/Data/PAAS/plots",
-      "output_root_data": "/Users/emma/Documents/Field campaigns/Pallas/Data/PAAS"
+      "output_root_plots": "/Users/xqv896/Documents/Field campaigns/Pallas/Data/PAAS/plots",
+      "output_root_data": "/Users/xqv896/Documents/Field campaigns/Pallas/Data/PAAS"
     }
 
   },

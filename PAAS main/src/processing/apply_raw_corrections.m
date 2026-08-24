@@ -95,39 +95,37 @@ function paas = apply_raw_corrections(paas, cfg)
     
             wl_map = cfg.Powermeter_Attenuation_soll_wl;
     
-            % Initialize target attenuation
-            A_soll = nan(sum(idx_time),1);
-    
+            % Default: no correction
+            scale = ones(sum(idx_time),1);
+            
             wl_data = paas.Laser_WaveLength(idx_time);
-    
-            % --- tolerance for float comparison (important!)
+            
             tol = 1;  % nm
-    
+            
             wl_fields = fieldnames(wl_map);
-    
+            
             for i = 1:numel(wl_fields)
-    
+            
                 wl_key = wl_fields{i};
                 wl_target = str2double(regexprep(wl_key, '[^0-9.]', ''));
-    
+            
                 mask = abs(wl_data - wl_target) < tol;
-    
+            
                 if any(mask)
-                    A_soll(mask) = wl_map.(wl_key);
+            
+                    A_soll = wl_map.(wl_key);
+                    A_meas = paas.Powermeter_Attenuation(idx_time);
+                    A_meas = A_meas(mask);
+            
+                    A_soll_lin = 10^(A_soll/10);
+                    A_meas_lin = 10.^(A_meas/10);
+            
+                    scale(mask) = A_soll_lin ./ A_meas_lin;
+            
                 end
             end
-    
-            % --- current attenuation ---
-            A_meas = paas.Powermeter_Attenuation(idx_time);
-
-            % --- convert to linear ---
-            A_meas_lin = 10.^(A_meas./10);
-            A_soll_lin = 10.^(A_soll./10);
-    
-            % --- scaling factor ---
-            scale = A_soll_lin ./ A_meas_lin;
-    
-            % --- apply correction ---
+            
+            % Apply correction
             paas.Power(idx_time) = paas.Power(idx_time) .* scale;
     
             fprintf(['Powermeter attenuation corrected (wavelength-based) ' ...

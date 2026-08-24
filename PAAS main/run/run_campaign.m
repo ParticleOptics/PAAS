@@ -2,7 +2,7 @@ clear; close all;
 addpath(genpath(pwd))
 
 instrument_SN = "PAAS_4L_02_005";
-campaign      = "Pallas"; % Hyytiala_Phase2
+campaign      = "Hyytiala_Phase2"; % Hyytiala_Phase2
 corr_method   = 3; % method to calculate b_abs
 
 time_av = 6; % in hours
@@ -31,6 +31,7 @@ TT_statistics = compute_statistics(time,b_abs,laser_wavelength, time_av);
 %% 5. Plot
 % 5.1 Diagnostic plots
 plot_phase_angle(b_abs, alpha, laser_wavelength, cfg.outputfolder_plots);
+plot_diagnostics(paas,cfg)
 plot_bg_diff_timeseries_hist(BG.BG_baseline, stats, 'X', time_av, cfg.outputfolder_plots);
 
 % 5.2 Data plots
