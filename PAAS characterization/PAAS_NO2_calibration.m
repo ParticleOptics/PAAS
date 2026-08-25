@@ -353,6 +353,8 @@ fname = fullfile(savefolder, ...
 exportgraphics(gcf, fname, 'Resolution', 300);
 
 %% Point calibration
+cell_constant = nan(n_laser,1);
+
 if strcmp(cfg.calibration_type,'point')
 
     for i = 1:n_laser
@@ -369,6 +371,7 @@ if strcmp(cfg.calibration_type,'point')
         end
 
         C_cell = nanmean(S_corr(i,:) ./ b_abs_NO2');
+        cell_constant(i) = C_cell;
         txt = sprintf('Cell constant at %d nm = %.0f\n', wl, C_cell);
         disp(txt)
     end
@@ -459,6 +462,7 @@ for i = 1:n_laser
     calibration_data(i).cell_constant = slope;
     calibration_data(i).cell_constant_SE = slope_SE;
     calibration_data(i).intercept = intercept;
+    cell_constant(i) = slope;
 
 end
 
@@ -478,7 +482,107 @@ save(fullfile(savefolder,...
 end
 
 
+%% Calibration summary and Numbers clipboard row
+wavelength_nm = unique_wl(:);
+attenuation_background_dB = nan(n_laser,1);
+attenuation_NO2_dB = nan(n_laser,1);
+n_background = zeros(n_laser,1);
+n_NO2 = zeros(n_laser,1);
+
+for i = 1:n_laser
+    attenuation_background_dB(i) = mean( ...
+        BG{i}.Powermeter_Attenuation, 'omitnan');
+    n_background(i) = height(BG{i});
+
+    attenuation_cells = cellfun(@(tbl) tbl.Powermeter_Attenuation, ...
+        period_data(i,:), 'UniformOutput', false);
+    attenuation_values = vertcat(attenuation_cells{:});
+    attenuation_NO2_dB(i) = mean(attenuation_values, 'omitnan');
+    n_NO2(i) = numel(attenuation_values);
+end
+
+calibration_summary = table(wavelength_nm, cell_constant, ...
+    attenuation_background_dB, attenuation_NO2_dB, n_background, n_NO2, ...
+    'VariableNames', {'Wavelength_nm', 'CellConstant', ...
+    'Attenuation_Background_dB', 'Attenuation_NO2_dB', ...
+    'N_Background', 'N_NO2'});
+
+% Fixed calibration-history order followed by the Numbers Notes column.
+fixed_wavelengths = [405, 473, 515, 660];
+clipboard_fields = repmat({''}, 1, 2*numel(fixed_wavelengths) + 1);
+
+for i = 1:height(calibration_summary)
+    source_wavelength = calibration_summary.Wavelength_nm(i);
+    if source_wavelength == 520
+        destination = find(fixed_wavelengths == 515, 1);
+        clipboard_fields{end} = ...
+            'Green channel measured at 520 nm (not 515 nm).';
+    else
+        destination = find(fixed_wavelengths == source_wavelength, 1);
+    end
+
+    if ~isempty(destination)
+        clipboard_fields{destination} = sprintf('%.0f', ...
+            calibration_summary.CellConstant(i));
+        clipboard_fields{numel(fixed_wavelengths) + destination} = ...
+            sprintf('%.4f', calibration_summary.Attenuation_NO2_dB(i));
+    end
+end
+
+calibration_row = array2table(str2double(clipboard_fields(1:8)), ...
+    'VariableNames', {'C_405', 'C_473', 'C_515', 'C_660', ...
+    'Atn_405_dB', 'Atn_473_dB', 'Atn_515_dB', 'Atn_660_dB'});
+disp(calibration_row)
+if ~isempty(clipboard_fields{end})
+    fprintf('Note: %s\n', clipboard_fields{end})
+end
+
+copy_row_for_numbers(clipboard_fields)
+
+
 %% FUNCTIONS
+function copy_row_for_numbers(fields)
+% Put one row on the clipboard as an HTML table for Apple Numbers.
+plain_text = [strjoin(fields, char(9)), newline];
+
+if ~ismac
+    clipboard('copy', plain_text);
+    return
+end
+
+html_cells = cellfun(@(value) ['<td>' value '</td>'], fields, ...
+    'UniformOutput', false);
+html_text = ['<table><tbody><tr>' strjoin(html_cells, '') ...
+    '</tr></tbody></table>'];
+
+jxa_script = sprintf([ ...
+    'ObjC.import("AppKit");' ...
+    'var pb=$.NSPasteboard.generalPasteboard;' ...
+    'pb.clearContents;' ...
+    'pb.setStringForType($(%s),$("public.html"));' ...
+    'pb.setStringForType($(%s),$("public.utf8-plain-text"));'], ...
+    jsonencode(html_text), jsonencode(plain_text));
+
+jxa_file = [tempname, '.js'];
+fid = fopen(jxa_file, 'w');
+if fid == -1
+    clipboard('copy', plain_text);
+    warning('Could not create temporary clipboard helper; copied plain text.')
+    return
+end
+
+cleanup_file = onCleanup(@() delete(jxa_file));
+fprintf(fid, '%s', jxa_script);
+fclose(fid);
+
+[status, message] = system(sprintf('osascript -l JavaScript "%s"', ...
+    jxa_file));
+if status ~= 0
+    clipboard('copy', plain_text);
+    warning('Numbers clipboard formatting failed: %s', strtrim(message))
+end
+end
+
 function b_abs_NO2 = NO2_absorption(T, p_mbar, NO2_ppb, NO2_Cabs)
 %NO2_ABSORPTION Computes NO2 absorption coefficient in m^-1
 %
