@@ -198,7 +198,7 @@
     },
     "x2026_05_22_660nm": {
       "filename": "paas_005_calib_260522_660nm.csv",
-      "calibration_type": "ramped",
+      "calibration_type": "point",
       "NO2_Cabs": [
         5.647E-19,
         2.1964E-19,

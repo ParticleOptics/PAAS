@@ -149,21 +149,6 @@ for i = 1:number_of_lasers
     R_bg(i,:) = arrayfun(@(k) mean(a(k:k+1)),1:length(a)-1); % the averaged bg over 2 samples
 end
 
-% Check that measurement is always surrounded by BG
-% valid = false(size(time));
-% for k = 1:length(time)
-%     if k <= length(time_bg)-1
-%         if ~isnat(time_bg(k)) && ~isnat(time_bg(k+1))
-%             valid(k) = true;
-%         end
-%     end
-% end
-% % Apply mask
-% R(:,~valid) = [];
-% X(:,~valid) = [];
-% Y(:,~valid) = [];
-% time(:,~valid) = [];
-
 if corr_method == 1
     % Calculate b_abs using R given by the LockIn
     % Not phase correct 

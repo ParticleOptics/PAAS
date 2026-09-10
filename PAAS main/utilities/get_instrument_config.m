@@ -7,7 +7,23 @@ C = load_json("config/instrument_config.json");
 L = load_json("config/local_config.json");
 
 % --- Extract scientific parameters
-cfg = C.(inst).(camp);
+% Start from parameters shared by every campaign for this instrument,
+% then let campaign-specific values override them when needed.
+instrument_cfg = C.(inst);
+
+if isfield(instrument_cfg, "instrument_defaults")
+    cfg = instrument_cfg.instrument_defaults;
+else
+    cfg = struct();
+end
+
+campaign_cfg = instrument_cfg.(camp);
+campaign_fields = fieldnames(campaign_cfg);
+
+for i = 1:numel(campaign_fields)
+    field = campaign_fields{i};
+    cfg.(field) = campaign_cfg.(field);
+end
 
 % --- Extract local parameters
 local = L.(inst).(camp);

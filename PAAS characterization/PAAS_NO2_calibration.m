@@ -25,7 +25,7 @@ clear; close all; clc;
 homeDir = char(java.lang.System.getProperty('user.home'));
 folder       = fullfile(homeDir,'Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/NO2 calibration/data/');
 savefolder   = fullfile(homeDir,'Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/NO2 calibration/plots/');
-dataset_date = "2026-03-09";
+dataset_date = "2026-05-22_660nm";
 
 select_periods_interactively = false; % you can select periods, but adding them to json is broken
 

@@ -2,7 +2,7 @@ clear; close all;
 addpath(genpath(pwd))
 
 instrument_SN = "PAAS_4L_02_005";
-campaign      = "Hyytiala_Phase2"; % Hyytiala_Phase2
+campaign      = "Hyytiala_Phase2"; % Hyytiala, Hyytiala_Phase2
 corr_method   = 3; % method to calculate b_abs
 
 time_av = 6; % in hours

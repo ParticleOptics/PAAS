@@ -1,9 +1,19 @@
 {
   "PAAS-4L-02-005": {
-    "Hyytiala": {
-      "valve_functionality": [[-1, 0], [0, -1]],
+    "instrument_defaults": {
       "c_cell_soll": 75484,
       "calibration_gain": 300,
+      "Powermeter_Attenuation_soll_wl": {
+        "405": 6.7092,
+        "473": 8.4619,
+        "515": 8.9517,
+        "520": 8.5670,
+        "660": 7.7305,
+        "785": 5.8075
+      }
+    },
+    "Hyytiala": {
+      "valve_functionality": [[-1, 0], [0, -1]],
       "c_cell_soll_period": ["2021-12-21 00:00:00", "2026-12-31 23:59:59"],
       "phase_angle_soll": 210,
       "phase_angle_soll_period": ["2021-12-21 00:00:00", "2025-08-12 23:59:59"], 
@@ -40,20 +50,7 @@
 
     "Hyytiala_Phase2": {
       "valve_functionality": [[-1, 0], [0, -1]],
-      "c_cell_soll": 75484,
-      "calibration_gain": 300,
       "c_cell_soll_period": ["2024-12-21 00:00:00", "2026-12-31 23:59:59"],
-      "Powermeter_Attenuation_soll_wl": {
-        "473": 8.4619,
-        "515": 8.9779,
-        "520": 8.5712,
-        "660": 7.7049,
-        "785": 5.8358
-      },
-      "Powermeter_Attenuation_period": [
-        "2024-02-01 00:00:00",
-        "2027-02-05 23:59:59"
-      ],
       "interlock_failure_period": [
         ["2025-07-30 07:00:00", "2025-08-12 18:00:00"],
         ["2025-11-18 21:04:45", "2025-11-18 22:00:41"],
@@ -106,8 +103,6 @@
       "valve_functionality": [[-1, 0], [0, -1]],
       "laser_power_corr": [1.0, 1.0, 0.906, 1.0],
       "laser_power_corr_period": ["2021-12-21 00:00:00", "2023-12-21 23:59:59"],
-      "c_cell_soll": 75484,
-      "calibration_gain": 300,
       "c_cell_soll_period": ["2021-12-21 00:00:00", "2023-12-21 23:59:59"],
       "interlock_failure_period": [
         ["1904-01-01 00:00:00", "1904-01-01 23:59:59"],
