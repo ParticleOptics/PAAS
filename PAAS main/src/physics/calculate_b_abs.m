@@ -1,5 +1,5 @@
 function [b_abs,alpha,time,TimeStart,TimeEnd,time_highres,laser_wavelength] = ...
-    calculate_b_abs(paas,valve_functionality,corr_method)
+    calculate_b_abs(paas,valve_functionality,corr_method,remove_start_segments_enabled)
 %calculate_b_abs Calculates absorption coefficients from imported PAAS data
 % Background subtraction included
 % X, Y and R are converted into m-1 using given f and cell constant
@@ -8,8 +8,17 @@ function [b_abs,alpha,time,TimeStart,TimeEnd,time_highres,laser_wavelength] = ..
 %       paas:                   imported paas data
 %       valve_functionality:    status of relay 1 and 2 for BG and sample
 %       corr_method:            method to calculate b_abs
+%       remove_start_segments_enabled:
+%                               remove zero-relay instrument-start segments;
+%                               optional, defaults to true. Disable for
+%                               campaigns such as Pallas whose concatenated
+%                               weekly files contain zero-relay file markers.
 %
 %   For KIT PAAS: valve_functionality = [-1 0; 0 -1];
+
+if nargin < 4 || isempty(remove_start_segments_enabled)
+    remove_start_segments_enabled = true;
+end
 
 % Number of lasers and first laser
 lasers = unique(paas.Laser);
@@ -38,9 +47,12 @@ while i >= number_of_lasers
     i = i - 1;
 end
 
-% Remove instrument start segments until valid BG
-% (Both Relays 0) -> THIS DOES NOT WORK FOR PALLAS
-paas = remove_start_segments(paas, valve_functionality);
+% Remove instrument start segments until valid BG when appropriate for the
+% campaign. Pallas weekly files contain zero-relay file-start markers that
+% are not invalid measurement segments, so this is disabled in its config.
+if remove_start_segments_enabled
+    paas = remove_start_segments(paas, valve_functionality);
+end
 
 % Calculate f
 f = paas.Calibration_Gain ./ paas.Lockin_Gain;
@@ -224,7 +236,6 @@ else % corr_method == 4
     end
     b_abs_highres = sqrt(temp1.^2 + temp2.^2); % 1/m
 end
-
 
 
 

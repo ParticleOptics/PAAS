@@ -1,15 +1,23 @@
 {
   "PAAS-4L-02-005": {
     "instrument_defaults": {
-      "c_cell_soll": 75484,
+      "c_cell_soll": 70676,
+      "c_cell_soll_overrides": [
+        {
+          "wavelength_nm": 405,
+          "cell_constant": 62318,
+          "period": ["2025-08-19 00:00:00", "2026-12-31 23:59:59"],
+          "reason": "Mean quantitative C405 after installation of the 785 nm laser and repositioning of all lasers"
+        }
+      ],
       "calibration_gain": 300,
       "Powermeter_Attenuation_soll_wl": {
-        "405": 6.7092,
+        "405": 6.675,
         "473": 8.4619,
-        "515": 8.9517,
+        "515": 8.9310,
         "520": 8.5670,
-        "660": 7.7305,
-        "785": 5.8075
+        "660": 7.8291,
+        "785": 5.0398
       }
     },
     "Hyytiala": {
@@ -19,9 +27,9 @@
       "phase_angle_soll_period": ["2021-12-21 00:00:00", "2025-08-12 23:59:59"], 
       "phase_angle_soll_lasers": [3],
       "interlock_failure_period": [
-        ["2025-07-30 07:00:00", "2025-08-12 18:00:00"]
+        ["2025-06-20 00:00:00", "2025-08-12 23:59:59"]
       ],
-      "interlock_failure_laser": 2,
+      "interlock_failure_laser": [2],
       "babs_range": [-5e-7, 1e-5],
       "n_laser": 4,
       "BG": 0,
@@ -54,13 +62,11 @@
       "interlock_failure_period": [
         ["2025-07-30 07:00:00", "2025-08-12 18:00:00"],
         ["2025-11-18 21:04:45", "2025-11-18 22:00:41"],
-        ["2025-12-03 10:14:00", "2025-12-04 18:21:41"],
-        ["2025-12-21 03:28:00", "2025-12-27 13:28:00"],
-        ["2026-02-09 23:23:00", "2026-02-10 16:40:00"]
+        ["2025-12-03 00:00:00", "2025-12-07 23:59:59"],
+        ["2025-12-21 00:00:00", "2026-02-10 23:59:59"]
       ],
       "interlock_failure_laser": [
         3,
-        1,
         1,
         1,
         1],
@@ -70,6 +76,14 @@
       "babs_range": [-5e-7, 5e-6],
       "n_laser": 4,
       "BG": 0,
+      "Powermeter_Attenuation_soll_overrides": [
+        {
+          "wavelength_nm": 785,
+          "attenuation_dB": 5.1139,
+          "period": ["2025-08-19 00:00:00", "2025-11-18 00:00:00"],
+          "reason": "MOD attenuation with one-window correction for in-cell power before replacement of the old WL11050-C7 windows"
+        }
+      ],
       "time_correction": {
         "input_timezone": "UTC+2",
         "output_timezone": "UTC",
@@ -101,6 +115,7 @@
 
     "Pallas": {
       "valve_functionality": [[-1, 0], [0, -1]],
+      "remove_start_segments_enabled": false,
       "laser_power_corr": [1.0, 1.0, 0.906, 1.0],
       "laser_power_corr_period": ["2021-12-21 00:00:00", "2023-12-21 23:59:59"],
       "c_cell_soll_period": ["2021-12-21 00:00:00", "2023-12-21 23:59:59"],

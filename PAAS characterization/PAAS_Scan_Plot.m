@@ -7,7 +7,7 @@ homeDir = char(java.lang.System.getProperty('user.home'));
 datafolder   = fullfile(homeDir,'/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/data/');
 outputfolder = fullfile(homeDir,'/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots');
 
-filename = 'paas_005_scan_260909.csv';
+filename = 'paas_005_scan_261001.csv';
 
 split_and_plot_frequency_scans(datafolder, filename, outputfolder)
 

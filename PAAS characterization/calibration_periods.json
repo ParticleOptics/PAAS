@@ -8,9 +8,9 @@
       "freq_scan": "~/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20260309_183710_515nm_10Hz.mat",
       "do_frequency_correction": true,
       "NO2_Cabs": [
-        5.647E-19,
-        2.1964E-19,
-        6.5037E-21
+        5.479456E-19,
+        2.290022E-19,
+        6.415073E-21
       ],
       "wavelength": [
         405,
@@ -46,14 +46,12 @@
       "do_phase_correction": true,
       "phase_angle_target": 220,
       "NO2_Cabs": [
-        5.647E-19,
-        2.1964E-19,
-        6.5037E-21
+        5.479456E-19,
+        2.290022E-19
       ],
       "wavelength": [
         405,
-        515,
-        660
+        515
       ],
       "bottle_conc": 540,
       "total_flow": 1.5,
@@ -88,14 +86,12 @@
       "do_phase_correction": true,
       "phase_angle_target": 228,
       "NO2_Cabs": [
-        5.647E-19,
-        2.1964E-19,
-        6.5037E-21
+        5.479456E-19,
+        2.290022E-19
       ],
       "wavelength": [
         405,
-        515,
-        660
+        515
       ],
       "bottle_conc": 540,
       "total_flow": 1.5,
@@ -144,14 +140,12 @@
       "filename": "paas_005_calib_260522.csv",
       "calibration_type": "ramped",
       "NO2_Cabs": [
-        5.647E-19,
-        2.1964E-19,
-        6.5037E-21
+        5.479456E-19,
+        2.290022E-19
       ],
       "wavelength": [
         405,
-        515,
-        660
+        515
       ],
       "bottle_conc": 540,
       "total_flow": 1.5,
@@ -200,13 +194,11 @@
       "filename": "paas_005_calib_260522_660nm.csv",
       "calibration_type": "point",
       "NO2_Cabs": [
-        5.647E-19,
-        2.1964E-19,
-        6.5037E-21
+        5.479456E-19,
+        6.415073E-21
       ],
       "wavelength": [
         405,
-        515,
         660
       ],
       "bottle_conc": 540,
@@ -246,8 +238,8 @@
         515
       ],
       "NO2_Cabs": [
-        5.647E-19,
-        2.1964E-19
+        5.479456E-19,
+        2.290022E-19
       ],
       "bottle_conc": 540,
       "total_flow": 1.5,
@@ -297,6 +289,365 @@
         [
           "2026-07-08 11:13:50",
           "2026-07-08 11:20:51"
+        ]
+      ]
+    },
+    "x2026_09_09": {
+      "filename": "paas_005_calib_260909.csv",
+      "calibration_type": "ramped",
+      "do_phase_correction": true,
+      "phase_angle_target": 263,
+      "NO2_Cabs": [
+        5.479456E-19,
+        2.290022E-19
+      ],
+      "wavelength": [
+        405,
+        515
+      ],
+      "bottle_conc": 540,
+      "total_flow": 1.5,
+      "NO2_flow": [
+        1.5,
+        0.3,
+        0.6,
+        0.9,
+        1.2,
+        1.5
+      ],
+      "freq_scan": "~/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20260909_104558_515nm_05Hz.mat",
+      "do_frequency_correction": true,
+      "background": [
+        [
+          "2026-09-09 11:04:57",
+          "2026-09-09 11:34:04"
+        ],
+        [
+          "2026-09-09 13:02:18",
+          "2026-09-09 13:05:58"
+        ]
+      ],
+      "NO2_periods": [
+        [
+          "2026-09-09 11:37:58",
+          "2026-09-09 11:51:15"
+        ],
+        [
+          "2026-09-09 11:54:55",
+          "2026-09-09 12:05:28"
+        ],
+        [
+          "2026-09-09 12:08:54",
+          "2026-09-09 12:21:58"
+        ],
+        [
+          "2026-09-09 12:25:10",
+          "2026-09-09 12:34:34"
+        ],
+        [
+          "2026-09-09 12:37:06",
+          "2026-09-09 12:47:24"
+        ],
+        [
+          "2026-09-09 12:50:09",
+          "2026-09-09 12:58:52"
+        ]
+      ]
+    },
+    "x2026_09_17": {
+      "filename": "paas_005_calib_260917.csv",
+      "background": [
+        "2026-09-17 11:59:21",
+        "2026-09-17 11:59:21"
+      ],
+      "NO2_periods": [
+        [
+          "2026-09-17 11:59:21",
+          "2026-09-17 11:59:21"
+        ],
+        [
+          "2026-09-17 11:59:21",
+          "2026-09-17 11:59:21"
+        ],
+        [
+          "2026-09-17 11:59:21",
+          "2026-09-17 11:59:21"
+        ],
+        [
+          "2026-09-17 11:59:21",
+          "2026-09-17 11:59:21"
+        ],
+        [
+          "2026-09-17 11:59:21",
+          "2026-09-17 11:59:21"
+        ],
+        [
+          "2026-09-17 11:59:21",
+          "2026-09-17 11:59:21"
+        ]
+      ]
+    },
+    "x2026_09_17_low_flow": {
+      "filename": "paas_005_calib_260917_low_flow.csv",
+      "background": [
+        "2026-09-17 13:30:03",
+        "2026-09-17 13:30:03"
+      ],
+      "NO2_periods": [
+        [
+          "2026-09-17 13:30:03",
+          "2026-09-17 13:30:03"
+        ],
+        [
+          "2026-09-17 13:30:03",
+          "2026-09-17 13:30:03"
+        ],
+        [
+          "2026-09-17 13:30:03",
+          "2026-09-17 13:30:03"
+        ],
+        [
+          "2026-09-17 13:30:03",
+          "2026-09-17 13:30:03"
+        ],
+        [
+          "2026-09-17 13:30:03",
+          "2026-09-17 13:30:03"
+        ],
+        [
+          "2026-09-17 13:30:03",
+          "2026-09-17 13:30:03"
+        ]
+      ]
+    },
+    "x2026_09_17_660nm": {
+      "filename": "paas_005_calib_260917_660nm.csv",
+      "calibration_type": "point",
+      "do_phase_correction": true,
+      "phase_angle_target": 263,
+      "NO2_Cabs": 6.415073E-21,
+      "wavelength": 660,
+      "bottle_conc": 540,
+      "total_flow": 1.05,
+      "NO2_flow": 1.05,
+      "freq_scan": "~/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20260917_103759_515nm_05Hz.mat",
+      "do_frequency_correction": true,
+      "background": [
+        [
+          "2026-09-17 14:48:33",
+          "2026-09-17 14:52:30"
+        ]
+      ],
+      "NO2_periods": [
+        [
+          "2026-09-17 14:54:00",
+          "2026-09-17 14:57:30"
+        ]
+      ]
+    },
+    "x2026_09_23": {
+      "filename": "paas_005_calib_260923.csv",
+      "calibration_type": "ramped",
+      "do_phase_correction": true,
+      "phase_angle_target": 263,
+      "NO2_Cabs": [
+        5.479456E-19,
+        2.290022E-19
+      ],
+      "wavelength": [
+        405,
+        515
+      ],
+      "bottle_conc": 540,
+      "total_flow": 1.05,
+      "flow_percent_reference": 1.5,
+      "NO2_flow": [
+        1.05,
+        0.21,
+        0.42,
+        0.63,
+        0.84,
+        1.05
+      ],
+      "freq_scan": "~/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20260923_105949_515nm_05Hz.mat",
+      "do_frequency_correction": true,
+      "background": [
+        [
+          "2026-09-23 11:21:00",
+          "2026-09-23 11:34:30"
+        ],
+        [
+          "2026-09-23 13:09:30",
+          "2026-09-23 13:20:30"
+        ]
+      ],
+      "NO2_periods": [
+        [
+          "2026-09-23 11:39:00",
+          "2026-09-23 11:52:00"
+        ],
+        [
+          "2026-09-23 11:55:00",
+          "2026-09-23 12:08:30"
+        ],
+        [
+          "2026-09-23 12:11:00",
+          "2026-09-23 12:25:00"
+        ],
+        [
+          "2026-09-23 12:28:00",
+          "2026-09-23 12:40:00"
+        ],
+        [
+          "2026-09-23 12:42:30",
+          "2026-09-23 12:55:00"
+        ],
+        [
+          "2026-09-23 12:57:30",
+          "2026-09-23 13:06:30"
+        ]
+      ]
+    },
+    "x2026_09_23_660nm": {
+      "filename": "paas_005_calib_260923_660nm.csv",
+      "calibration_type": "ramped",
+      "do_phase_correction": true,
+      "phase_angle_target": 263,
+      "NO2_Cabs": 6.415073E-21,
+      "wavelength": 660,
+      "bottle_conc": 540,
+      "total_flow": 1.05,
+      "flow_percent_reference": 1.5,
+      "NO2_flow": [
+        1.05,
+        0.84
+      ],
+      "freq_scan": "~/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20260923_105949_515nm_05Hz.mat",
+      "do_frequency_correction": true,
+      "background": [
+        [
+          "2026-09-23 13:22:00",
+          "2026-09-23 13:34:30"
+        ]
+      ],
+      "NO2_periods": [
+        [
+          "2026-09-23 13:36:30",
+          "2026-09-23 13:46:30"
+        ],
+        [
+          "2026-09-23 13:48:00",
+          "2026-09-23 13:55:45"
+        ]
+      ]
+    },
+    "x2026_10_01": {
+      "filename": "paas_005_calib_261001.csv",
+      "calibration_type": "ramped",
+      "do_phase_correction": true,
+      "phase_angle_target": 263,
+      "NO2_Cabs": [
+        5.479456E-19,
+        2.290022E-19
+      ],
+      "wavelength": [
+        405,
+        515
+      ],
+      "bottle_conc": 540,
+      "total_flow": 1.05,
+      "flow_percent_reference": 1.5,
+      "NO2_flow": [
+        1.05,
+        0.21,
+        0.42,
+        0.63,
+        0.84,
+        1.05
+      ],
+      "freq_scan": "~/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20261001_104234_515nm_05Hz.mat",
+      "do_frequency_correction": true,
+      "background": [
+        [
+          "2026-10-01 11:02:00",
+          "2026-10-01 11:24:00"
+        ],
+        [
+          "2026-10-01 12:59:00",
+          "2026-10-01 13:05:30"
+        ]
+      ],
+      "NO2_periods": [
+        [
+          "2026-10-01 11:28:30",
+          "2026-10-01 11:43:00"
+        ],
+        [
+          "2026-10-01 11:49:00",
+          "2026-10-01 12:00:00"
+        ],
+        [
+          "2026-10-01 12:04:00",
+          "2026-10-01 12:15:00"
+        ],
+        [
+          "2026-10-01 12:19:00",
+          "2026-10-01 12:29:30"
+        ],
+        [
+          "2026-10-01 12:32:00",
+          "2026-10-01 12:44:30"
+        ],
+        [
+          "2026-10-01 12:47:30",
+          "2026-10-01 12:54:00"
+        ]
+      ]
+    },
+    "x2026_10_01_660nm": {
+      "filename": "paas_005_calib_261001_660nm.csv",
+      "calibration_type": "ramped",
+      "do_phase_correction": true,
+      "phase_angle_target": 263,
+      "NO2_Cabs": 6.415073E-21,
+      "wavelength": 660,
+      "bottle_conc": 540,
+      "total_flow": 1.05,
+      "flow_percent_reference": 1.5,
+      "NO2_flow": [
+        1.05,
+        0.84,
+        0.63,
+        0.42
+      ],
+      "freq_scan": "~/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots/FreqScan_20261001_104234_515nm_05Hz.mat",
+      "do_frequency_correction": true,
+      "background": [
+        [
+          "2026-10-01 13:08:00",
+          "2026-10-01 13:25:30"
+        ],
+        [
+          "2026-10-01 14:40:00",
+          "2026-10-01 14:45:30"
+        ]
+      ],
+      "NO2_periods": [
+        [
+          "2026-10-01 13:28:00",
+          "2026-10-01 13:44:30"
+        ],
+        [
+          "2026-10-01 13:47:30",
+          "2026-10-01 14:03:00"
+        ],
+        [
+          "2026-10-01 14:05:00",
+          "2026-10-01 14:18:00"
+        ],
+        [
+          "2026-10-01 14:20:00",
+          "2026-10-01 14:34:00"
         ]
       ]
     }

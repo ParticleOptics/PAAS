@@ -78,6 +78,49 @@ function paas = apply_raw_corrections(paas, cfg)
         end
     end
 
+    % Apply wavelength- and period-specific cell-constant overrides after
+    % the instrument default. This permits a configuration change for one
+    % wavelength without changing the common cell constant for other lasers.
+    if isfield(cfg,"c_cell_soll_overrides") && ...
+       ~isempty(cfg.c_cell_soll_overrides)
+
+        overrides = cfg.c_cell_soll_overrides;
+
+        for i = 1:numel(overrides)
+            override = overrides(i);
+
+            if ~isfield(override,"wavelength_nm") || ...
+               ~isfield(override,"cell_constant") || ...
+               ~isfield(override,"period")
+                warning(['Skipping c_cell_soll_overrides entry %d: ' ...
+                         'wavelength_nm, cell_constant and period are required.'], i)
+                continue
+            end
+
+            override_period = datetime(override.period, ...
+                                       "TimeZone", paas.TimeStamp.TimeZone);
+            wavelength_tolerance_nm = 1;
+            idx_override = ...
+                paas.TimeStamp >= override_period(1) & ...
+                paas.TimeStamp <  override_period(2) & ...
+                abs(paas.Laser_WaveLength - override.wavelength_nm) < ...
+                    wavelength_tolerance_nm;
+
+            if any(idx_override)
+                paas.Calbration_CellConstant(idx_override) = ...
+                    override.cell_constant;
+
+                fprintf(['Cell constant overridden to %.4f at %.0f nm ' ...
+                         'for period %s to %s (%d timestamps).\n\n'], ...
+                    override.cell_constant, ...
+                    override.wavelength_nm, ...
+                    datestr(override_period(1)), ...
+                    datestr(override_period(2)), ...
+                    sum(idx_override));
+            end
+        end
+    end
+
     % -------------------------------------------------------------
     % Powermeter attenuation correction (wavelength-based)
     % -------------------------------------------------------------
@@ -152,6 +195,59 @@ function paas = apply_raw_corrections(paas, cfg)
                     sum(idx_time));
             end
     
+        end
+    end
+
+    % -------------------------------------------------------------
+    % Dated powermeter attenuation overrides
+    % -------------------------------------------------------------
+    % Overrides refine the instrument-level wavelength attenuation for a
+    % documented configuration period. The value is an effective attenuation:
+    % it may include an optical-path normalization such as a window correction.
+    if isfield(cfg,"Powermeter_Attenuation_soll_overrides") && ...
+       ~isempty(cfg.Powermeter_Attenuation_soll_overrides)
+
+        overrides = cfg.Powermeter_Attenuation_soll_overrides;
+        wl_map = cfg.Powermeter_Attenuation_soll_wl;
+        wl_fields = fieldnames(wl_map);
+
+        for i = 1:numel(overrides)
+            override = overrides(i);
+            period = datetime(override.period, ...
+                              "TimeZone", paas.TimeStamp.TimeZone);
+            wl_target = double(override.wavelength_nm);
+            A_override = double(override.attenuation_dB);
+
+            idx = paas.TimeStamp >= period(1) & ...
+                  paas.TimeStamp <  period(2) & ...
+                  abs(paas.Laser_WaveLength - wl_target) < 1;
+
+            if ~any(idx)
+                continue
+            end
+
+            A_base = NaN;
+            for j = 1:numel(wl_fields)
+                field_wavelength = str2double(regexprep( ...
+                    wl_fields{j}, '[^0-9.]', ''));
+                if abs(field_wavelength - wl_target) < 1
+                    A_base = wl_map.(wl_fields{j});
+                    break
+                end
+            end
+
+            if isnan(A_base)
+                error(['No instrument-level powermeter attenuation found ' ...
+                       'for override wavelength %.1f nm.'], wl_target)
+            end
+
+            scale_override = 10^((A_override - A_base)/10);
+            paas.Power(idx) = paas.Power(idx) .* scale_override;
+
+            fprintf(['Powermeter attenuation override %.4f dB applied ' ...
+                     'at %.0f nm for period %s to %s (%d points).\n\n'], ...
+                A_override, wl_target, datestr(period(1)), ...
+                datestr(period(2)), sum(idx));
         end
     end
 

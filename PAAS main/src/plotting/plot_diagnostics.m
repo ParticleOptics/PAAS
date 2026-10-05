@@ -6,6 +6,7 @@ function hFig = plot_diagnostics(paas, cfg)
 %   - cfg: struct with fields:
 %         .Powermeter_Attenuation_soll_wl  (struct with fields '405','473',...)
 %         .Powermeter_Attenuation_period   (1x2 datetime/strings) OPTIONAL
+%         .Powermeter_Attenuation_soll_overrides (dated effective values) OPTIONAL
 %
 % No file saving performed.
 
@@ -155,6 +156,25 @@ else
                 xm = xplot(1) + (xplot(2)-xplot(1))/2;
                 plot(ax2, xm, sval, 'o', 'MarkerFaceColor', cols(i,:), 'MarkerEdgeColor','k');
             end
+        end
+    end
+
+    % Overlay dated effective-attenuation overrides.
+    if isfield(cfg, 'Powermeter_Attenuation_soll_overrides') && ...
+       ~isempty(cfg.Powermeter_Attenuation_soll_overrides)
+        overrides = cfg.Powermeter_Attenuation_soll_overrides;
+        for k = 1:numel(overrides)
+            override = overrides(k);
+            w = double(override.wavelength_nm);
+            idx_color = find(abs(wl_unique - w) < 1, 1);
+            if isempty(idx_color)
+                continue
+            end
+            override_period = datetime(override.period);
+            plot(ax2, override_period, ...
+                [override.attenuation_dB override.attenuation_dB], '-', ...
+                'Color', cols(idx_color,:), 'LineWidth', 2.0, ...
+                'DisplayName', sprintf('effective %.0f nm', w));
         end
     end
 end

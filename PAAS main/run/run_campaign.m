@@ -17,8 +17,13 @@ paas = apply_time_corrections(paas, cfg); % campaign-specific time corrections
 paas = apply_raw_corrections(paas, cfg);  % corrections to raw signal
 
 %% 3. Calculate absorption
+remove_start_segments_enabled = true;
+if isfield(cfg, 'remove_start_segments_enabled')
+    remove_start_segments_enabled = logical(cfg.remove_start_segments_enabled);
+end
 [b_abs,alpha,time,TimeStart,TimeEnd,time_highres,laser_wavelength] = ...
-    calculate_b_abs(paas, cfg.valve_functionality, corr_method);
+    calculate_b_abs(paas, cfg.valve_functionality, corr_method, ...
+    remove_start_segments_enabled);
 
 %% 4. Possible data corrections
 b_abs = apply_corrections(b_abs,time,cfg);

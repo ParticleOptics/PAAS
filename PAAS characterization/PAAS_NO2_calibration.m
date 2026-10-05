@@ -25,7 +25,7 @@ clear; close all; clc;
 homeDir = char(java.lang.System.getProperty('user.home'));
 folder       = fullfile(homeDir,'Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/NO2 calibration/data/');
 savefolder   = fullfile(homeDir,'Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/NO2 calibration/plots/');
-dataset_date = "2026-05-22_660nm";
+dataset_date = "2026_10_01_660nm";
 
 select_periods_interactively = false; % you can select periods, but adding them to json is broken
 
@@ -107,6 +107,12 @@ if select_periods_interactively
     grid on
     title('Click start/end pairs')
 
+    % Save timestamps as plain local wall-clock strings. This avoids the
+    % timezone-conversion issues that can shift the selected calendar day on
+    % older MATLAB versions while still preserving the exact times that were
+    % clicked in the plot.
+    data_tz = char(paas.TimeStamp.TimeZone);
+
     n_bg   = input('Number of background periods: ');
     n_meas = input('Number of measurement periods: ');
 
@@ -116,18 +122,21 @@ if select_periods_interactively
     disp('Select BACKGROUND periods')
 
     ax = gca;  % get axis once
+    data_dnum = datenum(paas.TimeStamp);
     for i = 1:n_bg
     
         [x,~] = ginput(2);
     
-        % Convert using axis limits as reference
-        t = datetime(x, 'ConvertFrom','datenum', ...
-                     'TimeZone', paas.TimeStamp.TimeZone);
+        % Use the closest actual timestamp in the dataset rather than raw
+        % graphics x-values. This avoids the year-0002 conversion issue when
+        % date numbers are interpreted incorrectly by MATLAB.
+        [~, idx1] = min(abs(data_dnum - x(1)));
+        [~, idx2] = min(abs(data_dnum - x(2)));
+        t1 = paas.TimeStamp(idx1);
+        t2 = paas.TimeStamp(idx2);
     
-        t1 = t(1);
-        t2 = t(2);
-    
-        period_bg(i,:) = [string(t1), string(t2)];
+        period_bg(i,:) = [string(t1,'yyyy-MM-dd HH:mm:ss'), ...
+                          string(t2,'yyyy-MM-dd HH:mm:ss')];
     
     end
 
@@ -137,14 +146,13 @@ if select_periods_interactively
 
         [x,~] = ginput(2);
     
-        % Convert using axis limits as reference
-        t = datetime(x, 'ConvertFrom','datenum', ...
-                     'TimeZone', paas.TimeStamp.TimeZone);
-    
-        t1 = t(1);
-        t2 = t(2);
+        [~, idx1] = min(abs(data_dnum - x(1)));
+        [~, idx2] = min(abs(data_dnum - x(2)));
+        t1 = paas.TimeStamp(idx1);
+        t2 = paas.TimeStamp(idx2);
 
-        period_meas(i,:) = [string(t1),string(t2)];
+        period_meas(i,:) = [string(t1,'yyyy-MM-dd HH:mm:ss'), ...
+                            string(t2,'yyyy-MM-dd HH:mm:ss')];
 
     end
 
@@ -176,6 +184,10 @@ end
 
 %% Load periods from JSON
 
+% The JSON stores the exact wall-clock timestamps chosen in the plot. Reading
+% them back without timezone conversion preserves the annotated date/day that
+% was clicked, which is what we want for calibration selections.
+
 % --- Fix structure if flattened (single period case)
 bg = cfg.background;
 if iscell(bg) && ischar(bg{1})
@@ -189,8 +201,8 @@ for i = 1:n
     
     pair = bg{i};
     
-    BG_periods(i,1) = datetime(pair{1});
-    BG_periods(i,2) = datetime(pair{2});
+    BG_periods(i,1) = datetime(pair{1}, 'InputFormat','yyyy-MM-dd HH:mm:ss');
+    BG_periods(i,2) = datetime(pair{2}, 'InputFormat','yyyy-MM-dd HH:mm:ss');
 
 end
 
@@ -201,8 +213,8 @@ for i = 1:n
     
     pair = cfg.NO2_periods{i};
     
-    NO2_periods(i,1) = datetime(pair{1});
-    NO2_periods(i,2) = datetime(pair{2});
+    NO2_periods(i,1) = datetime(pair{1}, 'InputFormat','yyyy-MM-dd HH:mm:ss');
+    NO2_periods(i,2) = datetime(pair{2}, 'InputFormat','yyyy-MM-dd HH:mm:ss');
 
 end
 
@@ -213,6 +225,87 @@ n_laser = numel(unique_wl);
 for i = 1:n_laser
     laser_data{i} = paas(paas.Laser_WaveLength==unique_wl(i),:);
 end
+
+%% Plot phase-corrected signal and selected calibration periods
+% X has already been rotated above when phase correction is enabled. Plot
+% X/Power rather than R/Power so that the sign of the background-corrected
+% response remains visible.
+h_phase_signal = figure('Units','centimeters', ...
+    'Position',[2 2 30 max(12,8*n_laser)],'Color','w');
+tiledlayout(n_laser,1,'TileSpacing','compact','Padding','compact')
+
+for i = 1:n_laser
+    nexttile
+    hold on
+
+    temp = laser_data{i};
+    phase_corrected_signal = temp.X ./ temp.Power;
+
+    % Use an approximately one-minute moving window while allowing for
+    % different logging intervals between calibration files.
+    dt_seconds = seconds(median(diff(temp.TimeStamp),'omitnan'));
+    if isempty(dt_seconds) || ~isfinite(dt_seconds) || dt_seconds <= 0
+        rolling_window = 1;
+    else
+        rolling_window = max(1,round(60/dt_seconds));
+    end
+    signal_rolling = movmean(phase_corrected_signal,rolling_window, ...
+        'omitnan');
+
+    plot(temp.TimeStamp,phase_corrected_signal,'.', ...
+        'Color',[0.45 0.45 0.45], ...
+        'MarkerSize',7, ...
+        'DisplayName','Phase-corrected X / power')
+    plot(temp.TimeStamp,signal_rolling,'k-', ...
+        'LineWidth',1.8, ...
+        'DisplayName','~1 min rolling mean')
+
+    % Shade every configured background interval.
+    for j = 1:size(BG_periods,1)
+        if j == 1
+            bg_visibility = 'on';
+        else
+            bg_visibility = 'off';
+        end
+        xregion(BG_periods(j,1),BG_periods(j,2), ...
+            'FaceColor',[0.30 0.45 0.70], ...
+            'FaceAlpha',0.14, ...
+            'EdgeColor','none', ...
+            'DisplayName','Background', ...
+            'HandleVisibility',bg_visibility);
+    end
+
+    % Shade NO2 intervals and identify the configured NO2-flow fraction.
+    period_colors = lines(max(1,size(NO2_periods,1)));
+    for j = 1:size(NO2_periods,1)
+        if isfield(cfg,'flow_percent_reference')
+            flow_percent_reference = cfg.flow_percent_reference;
+        else
+            flow_percent_reference = cfg.total_flow;
+        end
+        NO2_percent = 100 * cfg.NO2_flow(j) / flow_percent_reference;
+        xregion(NO2_periods(j,1),NO2_periods(j,2), ...
+            'FaceColor',period_colors(j,:), ...
+            'FaceAlpha',0.14, ...
+            'EdgeColor','none', ...
+            'DisplayName',sprintf('%.0f%% NO_2 flow',NO2_percent));
+    end
+
+    grid on
+    box on
+    ylabel('X / power [V W^{-1}]')
+    title(sprintf('%d nm',round(unique_wl(i))))
+    set(gca,'FontSize',12,'LineWidth',1.2)
+    legend('Location','best','Box','off')
+end
+
+xlabel('Local time')
+sgtitle(sprintf('Phase-corrected signal and selected periods (%s)', ...
+    strrep(dataset_date,'_','\_')))
+
+exportgraphics(h_phase_signal,fullfile(savefolder, ...
+    sprintf('Phase_corrected_signal_%s.png',dataset_date)), ...
+    'Resolution',300)
 
 %% Plot phase angle
 figure('Units','centimeters','Position',[2 20 22 15])
@@ -412,7 +505,11 @@ for i = 1:n_laser
         'MarkerFaceColor','w',...
         'LineWidth',1.2)
 
-    x_fit = linspace(0,450e-6,200);
+    % Draw the regression over the full range of the measured absorption
+    % coefficients. A fixed upper limit of 450e-6 m^-1 truncated the 405 nm
+    % fit line even though the higher-concentration points were included in
+    % the regression.
+    x_fit = linspace(0,1.05*max(b_abs_NO2),200);
 
     intercept = model.Coefficients(1,1).Estimate;
     slope     = model.Coefficients(2,1).Estimate;
