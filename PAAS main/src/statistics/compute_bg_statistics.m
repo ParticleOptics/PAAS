@@ -1,7 +1,17 @@
 function [BG, stats] = compute_bg_statistics(paas, valve_functionality, time_av)
 
-wavelength = unique(paas.Laser);
-n_wl = length(wavelength);
+laser_id = unique(paas.Laser);
+n_wl = length(laser_id);
+
+% Map internal laser IDs (0, 1, ...) to physical wavelengths. Using the IDs
+% as wavelengths made wavelength2color return black for every background
+% trace.
+wavelength = NaN(n_wl, 1);
+for i = 1:n_wl
+    idx_laser = paas.Laser == laser_id(i);
+    wavelength(i) = median(double(paas.Laser_WaveLength(idx_laser)), ...
+        'omitnan');
+end
 
 % Dataset should start with a background measurement
 i = 1;
@@ -31,10 +41,11 @@ BG = struct();
 for i = 1:n_wl
 
     wl = wavelength(i);
+    id = laser_id(i);
 
     idx = paas.Relay1 == valve_functionality(1,1) & ...
           paas.Relay2 == valve_functionality(1,2) & ...
-          paas.Laser == wl;
+          paas.Laser == id;
 
     time = paas.TimeStamp(idx);
 

@@ -2,10 +2,17 @@ clear; close all;
 addpath(genpath(pwd))
 
 instrument_SN = "PAAS_4L_02_005";
-campaign      = "Hyytiala_Phase2"; % Hyytiala, Hyytiala_Phase2
+campaign      = "Pallas"; % Hyytiala, Hyytiala_Phase2
 corr_method   = 3; % method to calculate b_abs
 
 time_av = 6; % in hours
+
+% Plot selection. Each enabled entry creates one consolidated figure.
+plot_options = struct( ...
+    'instrument_diagnostics', true, ...
+    'background', true, ...
+    'absorption_aae', true, ...
+    'monthly_absorption_aae', true);
 
 
 %% 1. Load raw data
@@ -27,22 +34,84 @@ end
 
 %% 4. Possible data corrections
 b_abs = apply_corrections(b_abs,time,cfg);
-b_abs = correct_to_stp(b_abs, time, paas, true);
+[b_abs, stp_factor] = correct_to_stp(b_abs, time, paas, false);
 
 %% 5. Compute statistics
 TT_statistics = compute_statistics(time,b_abs,laser_wavelength, time_av);
 [BG, stats]   = compute_bg_statistics(paas, cfg.valve_functionality, time_av);
 
-%% 5. Plot
-% 5.1 Diagnostic plots
-plot_phase_angle(b_abs, alpha, laser_wavelength, cfg.outputfolder_plots);
-plot_diagnostics(paas,cfg)
-plot_bg_diff_timeseries_hist(BG.BG_baseline, stats, 'X', time_av, cfg.outputfolder_plots);
+% Channel-specific AAE validity limits: every absorption coefficient
+% entering the spectral fit must exceed twice its background RMSE. Channel
+% order is used deliberately because the green channel is recorded as both
+% 515 and 520 nm during the campaign.
+if numel(stats.X.rmse) ~= numel(laser_wavelength)
+    error('Background and absorption channel counts do not match.');
+end
+aae_threshold = 2*stats.X.rmse(:)*1e6;
 
-% 5.2 Data plots
-plot_timeseries_histogram(TT_statistics, stats, laser_wavelength, time_av);
-plot_AAE_timeseries(TT_statistics, laser_wavelength, 0.9);
-plot_daily_babs_statistics(time,b_abs,laser_wavelength);
+%% 5. Plot
+if plot_options.instrument_diagnostics
+    plot_instrument_diagnostics(paas, b_abs, alpha, time, ...
+        laser_wavelength, stp_factor);
+end
+
+if plot_options.background
+    plot_bg_diff_timeseries_hist(BG.BG_baseline, stats, 'X', ...
+        time_av, cfg.outputfolder_plots);
+end
+
+if plot_options.absorption_aae
+    plot_babs_aae(TT_statistics, laser_wavelength, aae_threshold, ...
+        sprintf('%d h means', time_av), 'line');
+end
+
+if plot_options.monthly_absorption_aae
+    plot_babs_aae(TT_statistics, laser_wavelength, aae_threshold, ...
+        'monthly distributions of 6 h means', 'box');
+end
+
+% Give every open figure the same amount of space on the primary monitor.
+tile_open_figures();
 
 %% 6. Save
 save_statistics(TT_statistics, cfg, time_av, campaign);
+
+function tile_open_figures()
+% Arrange all visible figures in an evenly sized grid on the primary screen.
+figures = findall(groot, 'Type', 'figure', 'Visible', 'on');
+if isempty(figures)
+    return
+end
+
+% Keep the layout order predictable (Figure 1, Figure 2, ...).
+[~, order] = sort([figures.Number]);
+figures = figures(order);
+
+screen_positions = get(groot, 'MonitorPositions');
+screen = screen_positions(1, :);
+n_figures = numel(figures);
+n_columns = ceil(sqrt(n_figures));
+n_rows = ceil(n_figures/n_columns);
+
+outer_margin = 30;
+top_reserved = 70;
+gap = 12;
+tile_width = floor((screen(3) - 2*outer_margin - ...
+    (n_columns - 1)*gap)/n_columns);
+tile_height = floor((screen(4) - outer_margin - top_reserved - ...
+    (n_rows - 1)*gap)/n_rows);
+
+for i = 1:n_figures
+    row = floor((i - 1)/n_columns);
+    column = mod(i - 1, n_columns);
+    x = screen(1) + outer_margin + column*(tile_width + gap);
+    y = screen(2) + screen(4) - top_reserved - ...
+        (row + 1)*tile_height - row*gap;
+
+    figures(i).WindowState = 'normal';
+    figures(i).Units = 'pixels';
+    figures(i).Position = [x, y, tile_width, tile_height];
+end
+
+drawnow
+end

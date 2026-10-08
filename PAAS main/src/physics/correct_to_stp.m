@@ -1,4 +1,4 @@
-function b_abs = correct_to_stp(b_abs, time, paas, makePlot)
+function [b_abs, CF] = correct_to_stp(b_abs, time, paas, makePlot)
 
 % ---------------------------------------------------------
 % Correct PAAS absorption coefficients to STP
@@ -13,7 +13,8 @@ function b_abs = correct_to_stp(b_abs, time, paas, makePlot)
 %   makePlot   : true/false
 %
 % OUTPUT
-%   b_abs_stp  : STP corrected absorption coefficients
+%   b_abs      : STP corrected absorption coefficients
+%   CF         : temperature-based STP correction factor
 %
 % STP:
 %   T0 = 273.15 K
@@ -104,5 +105,9 @@ if makePlot
     ax.TickDir = 'out';
 
 end
+
+% Return the corrected values. Previously b_abs_stp was calculated only for
+% the optional figure while the uncorrected input was returned.
+b_abs = b_abs_stp;
 
 end
