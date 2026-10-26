@@ -7,7 +7,7 @@ homeDir = char(java.lang.System.getProperty('user.home'));
 datafolder   = fullfile(homeDir,'/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/data/');
 outputfolder = fullfile(homeDir,'/Documents/Instruments/PAAS/PAAS-4L-005/Characterisation/Frequency scans/plots');
 
-filename = 'paas_005_scan_261001.csv';
+filename = 'paas_005_scan_261021.csv';
 
 split_and_plot_frequency_scans(datafolder, filename, outputfolder)
 
@@ -53,6 +53,30 @@ n_scans = length(scan_start);
 
 fprintf('Detected %d scans\n',n_scans)
 
+% Keep small scan sets visible for inspection and arrange them on screen.
+% Larger batches retain the original behaviour: plots are exported and
+% closed immediately to avoid filling the desktop with figure windows.
+keep_figures_open = n_scans < 5;
+
+if keep_figures_open
+    screen = get(groot,'ScreenSize');
+    margin = 40;
+    gap = 20;
+
+    n_cols = ceil(sqrt(n_scans));
+    n_rows = ceil(n_scans/n_cols);
+
+    available_width = screen(3) - 2*margin - (n_cols-1)*gap;
+    available_height = screen(4) - 2*margin - (n_rows-1)*gap;
+    fig_width = min(700, floor(available_width/n_cols));
+    fig_height = min(520, floor(available_height/n_rows));
+
+    grid_width = n_cols*fig_width + (n_cols-1)*gap;
+    grid_height = n_rows*fig_height + (n_rows-1)*gap;
+    grid_left = screen(1) + floor((screen(3)-grid_width)/2);
+    grid_bottom = screen(2) + floor((screen(4)-grid_height)/2);
+end
+
 %% ------------------------------------------------
 % Loop scans
 %% ------------------------------------------------
@@ -68,7 +92,21 @@ for s = 1:n_scans
     temp_mean = mean(temp(idx));
 
     %% Plot
-    fig = figure('Color','w','Position',[300 300 650 500]);
+    if keep_figures_open
+        col = mod(s-1,n_cols);
+        row_from_top = floor((s-1)/n_cols);
+        fig_left = grid_left + col*(fig_width+gap);
+        fig_bottom = grid_bottom + ...
+            (n_rows-1-row_from_top)*(fig_height+gap);
+        fig_position = [fig_left fig_bottom fig_width fig_height];
+    else
+        fig_position = [300 300 650 500];
+    end
+
+    fig = figure('Color','w', ...
+        'Position',fig_position, ...
+        'Name',sprintf('Frequency scan %d/%d',s,n_scans), ...
+        'NumberTitle','off');
 
     yyaxis right
     p1 = plot(freq,R,'-ok','MarkerFaceColor','k',...
@@ -134,7 +172,9 @@ for s = 1:n_scans
 
     %% Export plot
     exportgraphics(fig,outpath_plot,'Resolution',300)
-    close(fig)
+    if ~keep_figures_open
+        close(fig)
+    end
 
     %% Save scan and fit parameters
     scan_data = struct();
@@ -156,6 +196,5 @@ for s = 1:n_scans
 end
 
 end
-
 
 

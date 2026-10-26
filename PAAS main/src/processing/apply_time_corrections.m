@@ -55,6 +55,30 @@ function paas = apply_time_corrections(paas, cfg)
         end
     end
 
+    % ---------------------------------------------------------------------
+    % 2b. Timestamp-period shifts
+    %     Used when the instrument computer timezone changes. Period limits
+    %     refer to the timestamps as stored in the raw files, before shifts.
+    % ---------------------------------------------------------------------
+    if isfield(tc, "period_time_shifts")
+        for k = 1:numel(tc.period_time_shifts)
+            s = tc.period_time_shifts(k);
+            period_start = datetime(s.start_time, ...
+                "InputFormat", "yyyy-MM-dd HH:mm:ss");
+            period_end = datetime(s.end_time, ...
+                "InputFormat", "yyyy-MM-dd HH:mm:ss");
+            idx = paas.TimeStamp >= period_start & ...
+                paas.TimeStamp <= period_end;
+
+            paas.TimeStamp(idx) = paas.TimeStamp(idx) + ...
+                seconds(s.shift_seconds);
+
+            fprintf(['\nPeriod shift applied: %s to %s, ' ...
+                '%+d seconds (%d rows)\n'], ...
+                s.start_time, s.end_time, s.shift_seconds, sum(idx));
+        end
+    end
+
     % Assign input timezone if not already set
     if isempty(paas.TimeStamp.TimeZone)
         paas.TimeStamp.TimeZone = tc.input_timezone;
