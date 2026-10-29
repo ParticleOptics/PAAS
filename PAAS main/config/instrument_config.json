@@ -161,6 +161,43 @@
       }
   },
 
+  "PAAS-4L-02-004": {
+    "instrument_defaults": {
+      "c_cell_soll": 5821.3,
+      "calibration_gain": 30,
+      "Powermeter_Attenuation_soll_wl": {
+        "445": 8.79,
+        "515": 9.75,
+        "638": 7.99,
+        "785": 6.75
+      }
+    },
+    "Payerne": {
+      "valve_functionality": [[0, -1], [-1, 0]],
+      "minimum_laser_power_fraction": 0.5,
+      "laser_power_reference_percentile": 90,
+      "maximum_background_pair_gap_hours": 6,
+      "interlock_failure_period": [
+        ["2026-03-18 07:50:00", "2026-03-27 10:10:00"],
+        ["2026-03-27 21:40:00", "2026-05-29 09:00:00"]
+      ],
+      "interlock_failure_laser": [1, 1],
+      "c_cell_soll_period": ["2026-02-17 00:00:00", "2100-12-31 23:59:59"],
+      "phase_angle_soll": 293,
+      "phase_angle_soll_period": ["2026-02-17 00:00:00", "2100-12-31 23:59:59"],
+      "phase_angle_soll_lasers": [0, 1, 2, 3],
+      "n_laser": 4,
+      "BG": 0,
+      "time_correction": {
+        "input_timezone": "Europe/Zurich",
+        "output_timezone": "Europe/Zurich",
+        "apply_timezone_conversion": false,
+        "offset_seconds": 0,
+        "drift_seconds_per_day": 0
+      }
+    }
+  },
+
   "PAAS-3L-01-002": {
     "Ala-Honkajoki": {
       "valve_functionality": [[-1, 0], [0, -1]],

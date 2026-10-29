@@ -26,13 +26,30 @@ layout = tiledlayout(hFig, 3, 1, 'TileSpacing', 'compact', ...
 % Laser power
 ax_power = nexttile(layout);
 hold(ax_power, 'on')
+
+% Show the complete corrected power record in grey when quality filtering
+% is active. Accepted values are overlaid below in wavelength colours.
+has_unfiltered_power = ismember('Power_before_quality_filter', ...
+    paas.Properties.VariableNames);
+if has_unfiltered_power
+    all_power_color = [0.78 0.78 0.78];
+    for i = 1:numel(laser_wavelength)
+        mask = abs(double(paas.Laser_WaveLength) - laser_wavelength(i)) < 1;
+        plot(ax_power, power_time(mask), ...
+            1000*paas.Power_before_quality_filter(mask), '.', ...
+            'Color', all_power_color, 'HandleVisibility', 'off');
+    end
+    plot(ax_power, power_time(1), NaN, '.', 'Color', all_power_color, ...
+        'DisplayName', 'All measurements');
+end
+
 for i = 1:numel(laser_wavelength)
     mask = abs(double(paas.Laser_WaveLength) - laser_wavelength(i)) < 1;
-    plot(ax_power, power_time(mask), paas.Power(mask), '.', ...
+    plot(ax_power, power_time(mask), 1000*paas.Power(mask), '.', ...
         'Color', colors(i, :), ...
-        'DisplayName', sprintf('%.0f nm', laser_wavelength(i)));
+        'DisplayName', sprintf('%.0f nm valid', laser_wavelength(i)));
 end
-ylabel(ax_power, 'Laser power')
+ylabel(ax_power, 'Laser power [mW]')
 title(ax_power, 'Laser power')
 legend(ax_power, 'Location', 'best', 'NumColumns', ...
     min(4, numel(laser_wavelength)))

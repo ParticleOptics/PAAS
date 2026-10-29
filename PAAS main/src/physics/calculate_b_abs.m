@@ -1,242 +1,210 @@
-function [b_abs,alpha,time,TimeStart,TimeEnd,time_highres,laser_wavelength] = ...
-    calculate_b_abs(paas,valve_functionality,corr_method,remove_start_segments_enabled)
-%calculate_b_abs Calculates absorption coefficients from imported PAAS data
-% Background subtraction included
-% X, Y and R are converted into m-1 using given f and cell constant
-%   -> gain changes are taken into account
-%   input                 
-%       paas:                   imported paas data
-%       valve_functionality:    status of relay 1 and 2 for BG and sample
-%       corr_method:            method to calculate b_abs
-%       remove_start_segments_enabled:
-%                               remove zero-relay instrument-start segments;
-%                               optional, defaults to true. Disable for
-%                               campaigns such as Pallas whose concatenated
-%                               weekly files contain zero-relay file markers.
-%
-%   For KIT PAAS: valve_functionality = [-1 0; 0 -1];
+function [b_abs,alpha,time,TimeStart,TimeEnd,time_highres, ...
+        laser_wavelength] = calculate_b_abs( ...
+        paas,valve_functionality,corr_method,remove_start_segments_enabled, ...
+        maximum_background_gap_hours)
+%CALCULATE_B_ABS Calculate absorption from imported PAAS data.
+%   The signals are normalized by laser power, cell constant and gain.
+%   Sample and background measurements are averaged by physical relay-state
+%   blocks, and the background is interpolated to each sample-block time.
 
 if nargin < 4 || isempty(remove_start_segments_enabled)
     remove_start_segments_enabled = true;
 end
-
-% Number of lasers and first laser
-lasers = unique(paas.Laser);
-number_of_lasers = length(lasers);
-
-% Dataset should start with a background measurement
-i = 1;
-while (paas.Relay1(i) ~= valve_functionality(1,1))
-    paas(i,:) = [];
+if nargin < 5 || isempty(maximum_background_gap_hours)
+    maximum_background_gap_hours = 6;
 end
 
-% Dataset should end with a full background cycle
-i = size(paas,1);
-while i >= number_of_lasers
-    % Check last N entries
-    idx = (i-number_of_lasers+1):i;
-    is_bg = (paas.Relay1(idx) == valve_functionality(1,1)) & ...
-            (paas.Relay2(idx) == valve_functionality(1,2));
-    % Check also that all lasers are present
-    lasers_block = paas.Laser(idx);
-    if all(is_bg) && numel(unique(lasers_block)) == number_of_lasers
-        break
-    end
-    % Otherwise remove last entry and continue
-    paas(i,:) = [];
-    i = i - 1;
-end
-
-% Remove instrument start segments until valid BG when appropriate for the
-% campaign. Pallas weekly files contain zero-relay file-start markers that
-% are not invalid measurement segments, so this is disabled in its config.
+% Remove instrument-start segments when appropriate. Pallas weekly files
+% contain zero-relay file-start markers that are valid, so this is disabled
+% in that campaign's configuration.
 if remove_start_segments_enabled
     paas = remove_start_segments(paas, valve_functionality);
 end
 
-% Calculate f
-f = paas.Calibration_Gain ./ paas.Lockin_Gain;
+lasers = unique(paas.Laser);
+gain_factor = paas.Calibration_Gain ./ paas.Lockin_Gain;
+cell_constant = paas.Calbration_CellConstant;
 
-% Cell constant
-C_cell = paas.Calbration_CellConstant;
+% Convert the lock-in components to inverse metres. Power values rejected
+% by quality control are NaN and therefore propagate as missing data.
+scale = gain_factor ./ (paas.Power .* cell_constant);
+paas.X = paas.X .* scale;
+paas.Y = paas.Y .* scale;
+paas.R = paas.R .* scale;
 
-% Correct laser power
-paas.X = paas.X ./ paas.Power;
-paas.Y = paas.Y ./ paas.Power;
-paas.R = paas.R ./ paas.Power;
-
-% Apply cell constant
-paas.X = paas.X ./ C_cell .*f;
-paas.Y = paas.Y ./ C_cell .*f;
-paas.R = paas.R ./ C_cell .*f;
-
-% Calculate BG
-X_bg_temp = [];
-Y_bg_temp = [];
-R_bg_temp = [];
-for i = 1:number_of_lasers
-    index_bg = find(paas.Relay1 == valve_functionality(1,1) & ...
-        paas.Relay2 == valve_functionality(1,2) & paas.Laser==lasers(i));
-    idx = find(diff(index_bg)>number_of_lasers);
-    % Length of measurement cycle
-    n = max(diff(idx));
-    % Average BG measurements
-    x_bg = paas.X(index_bg); x_bg = reshape(x_bg(1:n*floor(length(index_bg)./n)),n,floor(length(index_bg)./n));
-    y_bg = paas.Y(index_bg); y_bg = reshape(y_bg(1:n*floor(length(index_bg)./n)),n,floor(length(index_bg)./n));
-    r_bg = paas.R(index_bg); r_bg = reshape(r_bg(1:n*floor(length(index_bg)./n)),n,floor(length(index_bg)./n));
-    X_bg_temp(i,:) = mean(x_bg,1,'omitnan');
-    Y_bg_temp(i,:) = mean(y_bg,1,'omitnan');
-    R_bg_temp(i,:) = mean(r_bg,1,'omitnan'); % not phase correct
-    % Average time
-    time_start_bg = paas.TimeStamp_start(index_bg); time_start_bg = reshape(time_start_bg(1:n*floor(length(index_bg)./n)),n,floor(length(index_bg)./n));
-    time_end_bg = paas.TimeStamp_end(index_bg); time_end_bg = reshape(time_end_bg(1:n*floor(length(index_bg)./n)),n,floor(length(index_bg)./n));
-    TimeStart(i,:) = time_start_bg(1,:);
-    TimeEnd(i,:) = time_end_bg(end,:);
-end
-TimeStart = datenum(TimeStart); TimeStart = min(TimeStart); TimeStart = datetime(TimeStart,'ConvertFrom','datenum');
-TimeEnd = datenum(TimeEnd); TimeEnd = max(TimeEnd); TimeEnd = datetime(TimeEnd,'ConvertFrom','datenum');
-time_bg = mean([TimeStart; TimeEnd],1,'omitnan');
-
-% Extract measurements and reshape
-X = [];
-Y = [];
-R = [];
-X_highres = [];
-Y_highres = [];
-R_highres = [];
-laser_wavelength = [];
-for i = 1:number_of_lasers
-    index = find(paas.Relay1 == valve_functionality(2,1) & ...
-        paas.Relay2 == valve_functionality(2,2) & paas.Laser==lasers(i));
-    idx = find(diff(index)>number_of_lasers);
-    % Length of measurement cycle
-    n = max(diff(idx));
-    x = paas.X(index); 
-    y = paas.Y(index); 
-    r = paas.R(index); 
-    % High resolution values
-    X_highres(i,:) = x';
-    Y_highres(i,:) = y';
-    R_highres(i,:) = r';
-    % Make average values
-    x = reshape(x(1:n*floor(length(index)./n)),n,floor(length(index)./n)); X(i,:) = mean(x,1,'omitnan');
-    y = reshape(y(1:n*floor(length(index)./n)),n,floor(length(index)./n)); Y(i,:) = mean(y,1,'omitnan');
-    r = reshape(r(1:n*floor(length(index)./n)),n,floor(length(index)./n)); R(i,:) = mean(r,1,'omitnan');
-    laser_wavelength(i) = paas.Laser_WaveLength(index(1));
-end
-laser_wavelength = laser_wavelength';
-
-% Get time for measurement cycle
-TimeStart = NaT(number_of_lasers,size(X,2));
-TimeEnd = NaT(number_of_lasers,size(X,2));
-time_highres = NaT(size(X_highres)); time_highres.TimeZone = paas.TimeStamp.TimeZone;
-for i = 1:number_of_lasers
-    index = find(paas.Relay1 == valve_functionality(2,1) &...
-        paas.Relay2 == valve_functionality(2,2) & paas.Laser==lasers(i));
-    idx = find(diff(index)>number_of_lasers);
-    % Length of measurement cycle
-    n = max(diff(idx));
-    % High resolution time
-    time_highres(i,:) = paas.TimeStamp(index);
-    % Average time
-    time_start = paas.TimeStamp_start(index); time_start = reshape(time_start(1:n*floor(length(index)./n)),n,floor(length(index)./n));
-    time_end = paas.TimeStamp_end(index); time_end = reshape(time_end(1:n*floor(length(index)./n)),n,floor(length(index)./n));
-    TimeStart(i,:) = time_start(1,:);
-    TimeEnd(i,:) = time_end(end,:);
-end
-TimeStart = datenum(TimeStart); TimeStart = min(TimeStart); TimeStart = datetime(TimeStart,'ConvertFrom','datenum');
-TimeEnd = datenum(TimeEnd); TimeEnd = max(TimeEnd); TimeEnd = datetime(TimeEnd,'ConvertFrom','datenum');
-time = mean([TimeStart; TimeEnd],1,'omitnan');
-
-% Make average BG
-X_bg = [];
-Y_bg = [];
-R_bg = [];
-for i = 1:number_of_lasers
-    a = X_bg_temp(i,:);
-    X_bg(i,:) = arrayfun(@(k) mean(a(k:k+1)),1:length(a)-1); % the averaged bg over 2 samples
-    a = Y_bg_temp(i,:);
-    Y_bg(i,:) = arrayfun(@(k) mean(a(k:k+1)),1:length(a)-1); % the averaged bg over 2 samples
-    a = R_bg_temp(i,:);
-    R_bg(i,:) = arrayfun(@(k) mean(a(k:k+1)),1:length(a)-1); % the averaged bg over 2 samples
+[b_abs,alpha,time,TimeStart,TimeEnd,time_highres,laser_wavelength] = ...
+    calculate_from_relay_blocks( ...
+    paas, valve_functionality, corr_method, lasers, ...
+    maximum_background_gap_hours);
 end
 
-if corr_method == 1
-    % Calculate b_abs using R given by the LockIn
-    % Not phase correct 
-    b_abs = R - R_bg; % in 1/m
-    
-    % High resolution data
-    b_abs_highres = NaN.* R_highres;
-    for i = 1:number_of_lasers
-        r = R_highres(i,:);
-        r = reshape(r(1:n*floor(size(R_highres,2)./n)),n,floor(length(index)./n));
-        r = r - R_bg(i,:); % remove average background
-        b_abs_highres(i,:) = r(:)';
+
+function [b_abs,alpha,time,TimeStart,TimeEnd,time_highres, ...
+        laser_wavelength] = calculate_from_relay_blocks( ...
+        paas, valve_functionality, corr_method, lasers, ...
+        maximum_background_gap_hours)
+%CALCULATE_FROM_RELAY_BLOCKS Average physical sample/background periods.
+
+    is_bg = paas.Relay1 == valve_functionality(1,1) & ...
+        paas.Relay2 == valve_functionality(1,2);
+    is_sample = paas.Relay1 == valve_functionality(2,1) & ...
+        paas.Relay2 == valve_functionality(2,2);
+
+    state = zeros(height(paas), 1);
+    state(is_bg) = 1;
+    state(is_sample) = 2;
+
+    % Do not merge equal relay states across logger outages or gaps between
+    % separately downloaded files. Five minutes is comfortably longer than
+    % the normal four-laser acquisition interval but shorter than an
+    % operational interruption.
+    time_gap_seconds = [0; seconds(diff(paas.TimeStamp))];
+    new_block = [true; state(2:end) ~= state(1:end-1)] | ...
+        time_gap_seconds > 300 | time_gap_seconds < 0;
+    block_id = cumsum(new_block);
+
+    bg_blocks = unique(block_id(is_bg), 'stable');
+    sample_blocks = unique(block_id(is_sample), 'stable');
+    n_bg = numel(bg_blocks);
+    n_sample = numel(sample_blocks);
+
+    if n_bg == 0 || n_sample == 0
+        error(['Relay-block averaging requires at least one background ' ...
+            'and one sample block.']);
     end
-    
-elseif corr_method == 2
-    % Calculate b_abs using R calculated from X and Y
-    % Same as method 1 but R is calculated from x and y (sanity check)
-    R_bg = sqrt((X_bg).^2 + (Y_bg).^2); % in V
-    Rc = sqrt((X).^2 + (Y).^2); % in V
-    b_abs = Rc - R_bg; % in 1/m
-    
-    % High resolution data
-    Rc_highres = sqrt((X_highres).^2 + (Y_highres).^2); % in V
-    b_abs_highres = NaN.* R_highres;
-    for i = 1:number_of_lasers
-        r = Rc_highres(i,:);
-        r = reshape(r(1:n*floor(size(R_highres,2)./n)),n,floor(length(index)./n));
-        r = r - R_bg(i,:); % remove average background
-        b_abs_highres(i,:) = r(:)';
-    end
-    
-elseif corr_method == 3
-    % Calculate b_abs using projected R  
-    S           = (X + 1i*Y);        % X,Y aktuelle Messung;
-    S_highres   = X_highres  + 1i*Y_highres;     
-    W0          = (X_bg + 1i*Y_bg); % Xw,Yw aus Leer-Kalibrierung (W0)
 
-    %  Background-corrected signal
-    S_corr = S - W0;
-    alpha = rad2deg(angle(S_corr));
-    b_abs = real(S_corr); % korrigierter Amplitudenwert in VW-1 auf Phase 0 bezogen
-    
-    % High resolution data
-    for i = 1:number_of_lasers
-        s_highres = reshape(S_highres(1:n*floor(size(S_highres,2)./n)),n,floor(length(index)./n));
-        % s_highres(:,~valid) = [];
-        for j=1:size(s_highres,1)
-            s_corr(j,:) = s_highres(j,:) - W0(i,:);
-        end
-        r = real(s_corr);
-        b_abs_highres(i,:) = r(:)';
+    n_lasers = numel(lasers);
+    laser_wavelength = NaN(n_lasers, 1);
+
+    % Map sparse logger block IDs and laser IDs to compact matrix indices,
+    % then aggregate all rows in one pass. This scales linearly with record
+    % count even for multi-year campaigns.
+    block_to_sample = zeros(max(block_id), 1);
+    block_to_sample(sample_blocks) = 1:n_sample;
+    block_to_bg = zeros(max(block_id), 1);
+    block_to_bg(bg_blocks) = 1:n_bg;
+    [valid_laser, laser_position] = ismember(paas.Laser, lasers);
+    mean_omitnan = @(x) mean(x, 'omitnan');
+
+    sample_rows = is_sample & valid_laser;
+    sample_subs = [laser_position(sample_rows), ...
+        block_to_sample(block_id(sample_rows))];
+    sample_x = accumarray(sample_subs, paas.X(sample_rows), ...
+        [n_lasers, n_sample], mean_omitnan, NaN);
+    sample_y = accumarray(sample_subs, paas.Y(sample_rows), ...
+        [n_lasers, n_sample], mean_omitnan, NaN);
+    sample_r = accumarray(sample_subs, paas.R(sample_rows), ...
+        [n_lasers, n_sample], mean_omitnan, NaN);
+    sample_signal = complex(sample_x, sample_y);
+
+    bg_rows = is_bg & valid_laser;
+    bg_subs = [laser_position(bg_rows), ...
+        block_to_bg(block_id(bg_rows))];
+    bg_x = accumarray(bg_subs, paas.X(bg_rows), ...
+        [n_lasers, n_bg], mean_omitnan, NaN);
+    bg_y = accumarray(bg_subs, paas.Y(bg_rows), ...
+        [n_lasers, n_bg], mean_omitnan, NaN);
+    bg_r_blocks = accumarray(bg_subs, paas.R(bg_rows), ...
+        [n_lasers, n_bg], mean_omitnan, NaN);
+    bg_signal_blocks = complex(bg_x, bg_y);
+
+    timestamp_numeric = datenum(paas.TimeStamp);
+    sample_block_index = block_to_sample(block_id(is_sample));
+    sample_start_numeric = accumarray(sample_block_index, ...
+        timestamp_numeric(is_sample), [n_sample, 1], @min, NaN);
+    sample_end_numeric = accumarray(sample_block_index, ...
+        timestamp_numeric(is_sample), [n_sample, 1], @max, NaN);
+    bg_block_index = block_to_bg(block_id(is_bg));
+    bg_start_numeric = accumarray(bg_block_index, ...
+        timestamp_numeric(is_bg), [n_bg, 1], @min, NaN);
+    bg_end_numeric = accumarray(bg_block_index, ...
+        timestamp_numeric(is_bg), [n_bg, 1], @max, NaN);
+
+    TimeStart = datetime(sample_start_numeric, 'ConvertFrom', 'datenum', ...
+        'TimeZone', paas.TimeStamp.TimeZone)';
+    TimeEnd = datetime(sample_end_numeric, 'ConvertFrom', 'datenum', ...
+        'TimeZone', paas.TimeStamp.TimeZone)';
+    bg_time_numeric = ((bg_start_numeric + bg_end_numeric)/2)';
+
+    for i = 1:n_lasers
+        wavelength_rows = paas.Laser == lasers(i);
+        laser_wavelength(i) = median( ...
+            paas.Laser_WaveLength(wavelength_rows), 'omitnan');
     end
-    
-else % corr_method == 4
-    % Calculate b_abs in a phase correct manner
-    %Rc = sqrt((X-X_bg).^2 + (Y-Y_bg).^2); % in V
-    S = (X + 1i*Y) - (X_bg + 1i*Y_bg); % complex signal
-    alpha = rad2deg(angle(S)); % phase angle of signal in degree
-    b_abs = abs(S); % in 1/m
-    
-    % High resolution data
-    temp1 = NaN.* R_highres;
-    temp2 = NaN.* R_highres;
-    for i = 1:number_of_lasers
-        x = X_highres(i,:);
-        x = reshape(x(1:n*floor(size(R_highres,2)./n)),n,floor(length(index)./n));
-        x = x - X_bg(i,:); % remove average background
-        temp1(i,:) = x(:)';
-        y = Y_highres(i,:);
-        y = reshape(y(1:n*floor(size(R_highres,2)./n)),n,floor(length(index)./n));
-        y = y - Y_bg(i,:); % remove average background
-        temp2(i,:) = y(:)';
+
+    time = TimeStart + (TimeEnd - TimeStart)/2;
+    sample_time_numeric = datenum(time);
+    bg_signal = complex(NaN(n_lasers, n_sample));
+    bg_r = NaN(n_lasers, n_sample);
+
+    for i = 1:n_lasers
+        bg_signal(i,:) = interpolate_block_background( ...
+            bg_time_numeric, bg_signal_blocks(i,:), sample_time_numeric, ...
+            maximum_background_gap_hours);
+        bg_r(i,:) = interpolate_block_background( ...
+            bg_time_numeric, bg_r_blocks(i,:), sample_time_numeric, ...
+            maximum_background_gap_hours);
     end
-    b_abs_highres = sqrt(temp1.^2 + temp2.^2); % 1/m
+
+    corrected_signal = sample_signal - bg_signal;
+    alpha = rad2deg(angle(corrected_signal));
+    switch corr_method
+        case 1
+            b_abs = sample_r - bg_r;
+        case 2
+            b_abs = abs(sample_signal) - abs(bg_signal);
+        case 3
+            b_abs = real(corrected_signal);
+        case 4
+            b_abs = abs(corrected_signal);
+        otherwise
+            error('corr_method must be 1, 2, 3 or 4.');
+    end
+
+    time_highres = NaT(0, 0, 'TimeZone', paas.TimeStamp.TimeZone);
+
+    fprintf(['Relay-block averaging: %d sample blocks, %d background ' ...
+        'blocks; background linearly interpolated in time with a %.1f h ' ...
+        'maximum interpolation gap.\n'], ...
+        n_sample, n_bg, maximum_background_gap_hours);
 end
 
 
+function interpolated = interpolate_block_background( ...
+        bg_time, bg_value, sample_time, maximum_background_gap_hours)
+%INTERPOLATE_BLOCK_BACKGROUND Interpolate with nearest endpoint fallback.
 
+    valid = isfinite(bg_time) & isfinite(bg_value);
+    bg_time = bg_time(valid);
+    bg_value = bg_value(valid);
 
+    if isempty(bg_time)
+        interpolated = NaN(size(sample_time), 'like', bg_value);
+        return
+    end
+
+    [bg_time, unique_index] = unique(bg_time, 'stable');
+    bg_value = bg_value(unique_index);
+    if numel(bg_time) == 1
+        interpolated = repmat(bg_value, size(sample_time));
+        return
+    end
+
+    interpolated = interp1(bg_time, bg_value, sample_time, 'linear');
+
+    % Do not interpolate across logger outages. For a sample that lies
+    % between backgrounds separated by a long gap, use whichever endpoint
+    % is temporally nearer. This prevents a multi-day artificial background
+    % ramp while still allowing a sample immediately after restart to use
+    % the first new background.
+    long_gap = find(diff(bg_time) > maximum_background_gap_hours/24);
+    for k = long_gap
+        in_gap = sample_time > bg_time(k) & sample_time < bg_time(k+1);
+        nearer_right = (sample_time-bg_time(k)) > ...
+            (bg_time(k+1)-sample_time);
+        interpolated(in_gap & ~nearer_right) = bg_value(k);
+        interpolated(in_gap & nearer_right) = bg_value(k+1);
+    end
+    interpolated(sample_time < bg_time(1)) = bg_value(1);
+    interpolated(sample_time > bg_time(end)) = bg_value(end);
+end

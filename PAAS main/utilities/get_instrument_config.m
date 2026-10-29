@@ -33,6 +33,14 @@ cfg.datafolder   = fullfile(local.data_root, local.data_subfolder);
 cfg.outputfolder_plots = fullfile(local.output_root_plots);
 cfg.outputfolder_data = fullfile(local.output_root_data);
 
+% Output locations may not exist yet for a newly configured instrument.
+if ~isfolder(cfg.outputfolder_plots)
+    mkdir(cfg.outputfolder_plots);
+end
+if ~isfolder(cfg.outputfolder_data)
+    mkdir(cfg.outputfolder_data);
+end
+
 end
 
 

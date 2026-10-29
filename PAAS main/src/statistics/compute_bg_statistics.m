@@ -1,4 +1,9 @@
-function [BG, stats] = compute_bg_statistics(paas, valve_functionality, time_av)
+function [BG, stats] = compute_bg_statistics( ...
+        paas, valve_functionality, time_av, maximum_pair_gap_hours)
+
+if nargin < 4 || isempty(maximum_pair_gap_hours)
+    maximum_pair_gap_hours = 6;
+end
 
 laser_id = unique(paas.Laser);
 n_wl = length(laser_id);
@@ -59,16 +64,56 @@ for i = 1:n_wl
     BG_R = R ./ P ./ C_cell;
     BG_X = X ./ P ./ C_cell;
 
-    BG.(sprintf("BG_R_%d",wl)) = BG_R(1:end-1);
-    BG.(sprintf("BG_X_%d",wl)) = BG_X(1:end-1);
+    % File boundaries can produce duplicate timestamps. Consolidate those
+    % first, then average every complete physical background relay block.
+    [time, ~, time_group] = unique(time);
+    mean_omitnan = @(x) mean(x,'omitnan');
+    BG_R = accumarray(time_group, BG_R, [], mean_omitnan, NaN);
+    BG_X = accumarray(time_group, BG_X, [], mean_omitnan, NaN);
+    P = accumarray(time_group, P, [], mean_omitnan, NaN);
 
-    BG.(sprintf("diff_BG_R_%d",wl)) = diff(BG_R);
-    BG.(sprintf("diff_BG_X_%d",wl)) = diff(BG_X);
+    % Within a background block, records for a given wavelength are about
+    % 30 s apart. The intervening sample period creates a much longer gap.
+    % Five minutes therefore separates physical background blocks while
+    % tolerating an occasional missing acquisition.
+    new_block = [true; diff(time) > minutes(5) | diff(time) < seconds(0)];
+    block_id = cumsum(new_block);
+    n_blocks = block_id(end);
+    block_time_numeric = accumarray(block_id,posixtime(time), ...
+        [n_blocks 1],@mean,NaN);
+    time = datetime(block_time_numeric,'ConvertFrom','posixtime', ...
+        'TimeZone',time.TimeZone);
+    BG_R = accumarray(block_id,BG_R,[n_blocks 1],mean_omitnan,NaN);
+    BG_X = accumarray(block_id,BG_X,[n_blocks 1],mean_omitnan,NaN);
+    P = accumarray(block_id,P,[n_blocks 1],mean_omitnan,NaN);
 
-    BG.(sprintf("Laser_Power_%d",wl)) = P(1:end-1);
+    % Keep one row per block. A difference is assigned to the earlier block;
+    % the final block has no following neighbour and therefore gets NaN.
+    diff_BG_R = [diff(BG_R); NaN];
+    diff_BG_X = [diff(BG_X); NaN];
+
+    % Differences describe stability only when the two background records
+    % belong to the same continuous operating period. Never bridge logger
+    % outages or other multi-hour gaps: doing so turns a level change after
+    % an outage into an artificial background-noise estimate.
+    pair_gap = diff(time);
+    invalid_pair = pair_gap < seconds(0) | ...
+        pair_gap > hours(maximum_pair_gap_hours);
+    invalid_difference = [invalid_pair; false];
+    diff_BG_R(invalid_difference) = NaN;
+    diff_BG_X(invalid_difference) = NaN;
+
+    BG.(sprintf("BG_R_%d",wl)) = BG_R;
+    BG.(sprintf("BG_X_%d",wl)) = BG_X;
+
+    BG.(sprintf("diff_BG_R_%d",wl)) = diff_BG_R;
+    BG.(sprintf("diff_BG_X_%d",wl)) = diff_BG_X;
+
+    BG.(sprintf("Laser_Power_%d",wl)) = P;
+    BG.(sprintf("Time_%d",wl)) = time;
 
     if i == 1
-        BG.Time = time(1:end-1);
+        BG.Time = time;
     end
 
 end
@@ -77,19 +122,30 @@ end
 % create timetable
 % ------------------------------------------------
 
-BG_highres = timetable(BG.Time);
+BG_highres = timetable();
 
 for i = 1:n_wl
 
     wl = wavelength(i);
 
-    BG_highres.(sprintf("BG_R_%d",wl)) = BG.(sprintf("BG_R_%d",wl));
-    BG_highres.(sprintf("BG_X_%d",wl)) = BG.(sprintf("BG_X_%d",wl));
+    channel_time = BG.(sprintf("Time_%d",wl));
+    channel_names = compose(["BG_R_%d", "BG_X_%d", ...
+        "diff_BG_R_%d", "diff_BG_X_%d", "Laser_Power_%d"], wl);
+    channel_tt = timetable(channel_time, ...
+        BG.(sprintf("BG_R_%d",wl)), ...
+        BG.(sprintf("BG_X_%d",wl)), ...
+        BG.(sprintf("diff_BG_R_%d",wl)), ...
+        BG.(sprintf("diff_BG_X_%d",wl)), ...
+        BG.(sprintf("Laser_Power_%d",wl)), ...
+        'VariableNames', cellstr(channel_names));
+    channel_tt.Properties.DimensionNames{1} = 'Time';
 
-    BG_highres.(sprintf("diff_BG_R_%d",wl)) = BG.(sprintf("diff_BG_R_%d",wl));
-    BG_highres.(sprintf("diff_BG_X_%d",wl)) = BG.(sprintf("diff_BG_X_%d",wl));
-
-    BG_highres.(sprintf("Laser_Power_%d",wl)) = BG.(sprintf("Laser_Power_%d",wl));
+    if width(BG_highres) == 0
+        BG_highres = channel_tt;
+    else
+        BG_highres = synchronize(BG_highres, channel_tt, ...
+            'union', 'fillwithmissing');
+    end
 
 end
 
@@ -132,5 +188,6 @@ for i = 1:n_wl
 end
 
 stats.wavelength = wavelength;
+stats.maximum_pair_gap_hours = maximum_pair_gap_hours;
 
 end

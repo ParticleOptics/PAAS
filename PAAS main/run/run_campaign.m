@@ -1,16 +1,23 @@
 clear; close all;
-addpath(genpath(pwd))
 
-instrument_SN = "PAAS_4L_02_005";
-campaign      = "Pallas"; % Hyytiala, Hyytiala_Phase2
+% Resolve paths from this script rather than from MATLAB's current folder.
+% This allows run_campaign to be launched from the editor, the run folder,
+% or the project root while keeping relative config paths valid.
+project_root = fileparts(fileparts(mfilename('fullpath')));
+addpath(genpath(project_root))
+cd(project_root)
+
+instrument_SN = "PAAS_4L_02_004";
+campaign      = "Payerne"; % Hyytiala, Hyytiala_Phase2
 corr_method   = 3; % method to calculate b_abs
 
-time_av = 6; % in hours
+time_av = 3; % in hours
 
 % Plot selection. Each enabled entry creates one consolidated figure.
 plot_options = struct( ...
     'instrument_diagnostics', true, ...
     'background', true, ...
+    'background_component_comparison', true, ...
     'absorption_aae', true, ...
     'monthly_absorption_aae', true);
 
@@ -28,9 +35,13 @@ remove_start_segments_enabled = true;
 if isfield(cfg, 'remove_start_segments_enabled')
     remove_start_segments_enabled = logical(cfg.remove_start_segments_enabled);
 end
+maximum_bg_pair_gap_hours = 6;
+if isfield(cfg, 'maximum_background_pair_gap_hours')
+    maximum_bg_pair_gap_hours = cfg.maximum_background_pair_gap_hours;
+end
 [b_abs,alpha,time,TimeStart,TimeEnd,time_highres,laser_wavelength] = ...
     calculate_b_abs(paas, cfg.valve_functionality, corr_method, ...
-    remove_start_segments_enabled);
+    remove_start_segments_enabled, maximum_bg_pair_gap_hours);
 
 %% 4. Possible data corrections
 b_abs = apply_corrections(b_abs,time,cfg);
@@ -38,7 +49,8 @@ b_abs = apply_corrections(b_abs,time,cfg);
 
 %% 5. Compute statistics
 TT_statistics = compute_statistics(time,b_abs,laser_wavelength, time_av);
-[BG, stats]   = compute_bg_statistics(paas, cfg.valve_functionality, time_av);
+[BG, stats] = compute_bg_statistics(paas, cfg.valve_functionality, ...
+    time_av, maximum_bg_pair_gap_hours);
 
 % Channel-specific AAE validity limits: every absorption coefficient
 % entering the spectral fit must exceed twice its background RMSE. Channel
@@ -58,6 +70,10 @@ end
 if plot_options.background
     plot_bg_diff_timeseries_hist(BG.BG_baseline, stats, 'X', ...
         time_av, cfg.outputfolder_plots);
+end
+
+if plot_options.background_component_comparison
+    plot_bg_component_comparison(BG,stats,cfg.outputfolder_plots);
 end
 
 if plot_options.absorption_aae

@@ -252,6 +252,69 @@ function paas = apply_raw_corrections(paas, cfg)
     end
 
     % -------------------------------------------------------------
+    % Minimum laser-power quality control
+    % -------------------------------------------------------------
+    % Determine a high-state reference power independently for every laser.
+    % The configurable percentile is robust to long low-power periods that
+    % could otherwise become the campaign median. Setting affected rows to
+    % NaN prevents division by low power from producing absorption artefacts.
+    if isfield(cfg,"minimum_laser_power_fraction") && ...
+       ~isempty(cfg.minimum_laser_power_fraction)
+
+        % Retain the corrected, unfiltered values for diagnostics. The
+        % working Power column is still masked below and is the only one
+        % used in the absorption calculation.
+        paas.Power_before_quality_filter = paas.Power;
+
+        minimum_fraction = double(cfg.minimum_laser_power_fraction);
+        if ~isscalar(minimum_fraction) || ~isfinite(minimum_fraction) || ...
+           minimum_fraction <= 0 || minimum_fraction > 1
+            error(['minimum_laser_power_fraction must be a finite scalar ' ...
+                   'greater than 0 and no greater than 1.'])
+        end
+
+        reference_percentile = 90;
+        if isfield(cfg,"laser_power_reference_percentile") && ...
+           ~isempty(cfg.laser_power_reference_percentile)
+            reference_percentile = ...
+                double(cfg.laser_power_reference_percentile);
+        end
+        if ~isscalar(reference_percentile) || ...
+           ~isfinite(reference_percentile) || ...
+           reference_percentile <= 0 || reference_percentile > 100
+            error(['laser_power_reference_percentile must be a finite ' ...
+                   'scalar greater than 0 and no greater than 100.'])
+        end
+
+        laser_ids = unique(paas.Laser);
+        for i = 1:numel(laser_ids)
+            idx_laser = paas.Laser == laser_ids(i);
+            valid_power = idx_laser & isfinite(paas.Power) & paas.Power > 0;
+            if ~any(valid_power)
+                warning('No positive laser-power values for laser %g.', ...
+                    laser_ids(i))
+                continue
+            end
+
+            reference_power = prctile( ...
+                paas.Power(valid_power), reference_percentile);
+            minimum_power = minimum_fraction * reference_power;
+            idx_low = idx_laser & isfinite(paas.Power) & ...
+                paas.Power < minimum_power;
+            paas.Power(idx_low) = NaN;
+
+            wavelength = median(double( ...
+                paas.Laser_WaveLength(idx_laser)), 'omitnan');
+            fprintf(['Laser-power filter at %.0f nm: P%.0f reference ' ...
+                     '%.3f mW, ' ...
+                     'minimum %.3f mW (%.0f%%); %d rows masked.\n'], ...
+                wavelength, reference_percentile, 1000*reference_power, ...
+                1000*minimum_power, 100*minimum_fraction, sum(idx_low));
+        end
+        fprintf('\n')
+    end
+
+    % -------------------------------------------------------------
     % Interlock failure
     %   - Sets paas.Power = NaN for affected laser + time periods
     % -------------------------------------------------------------

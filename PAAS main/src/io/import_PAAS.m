@@ -4,10 +4,22 @@ function [paas] = import_PAAS(filename, n_laser, BG, show_plot, t_start, t_end)
 
 %% Read data
 warning('off','MATLAB:table:ModifiedAndSavedVarnames')
-opts = detectImportOptions(filename);
+
+% Some logger files contain isolated truncated rows or two records joined
+% on one line. Those rows make detectImportOptions invent ExtraVar columns
+% and prevent otherwise compatible files from being concatenated. Import a
+% temporary, row-width-validated copy when needed; never modify raw data.
+[import_filename, cleanup_temp, n_invalid_rows] = ...
+    validated_csv_copy(filename);
+if n_invalid_rows > 0
+    warning('PAAS:InvalidCsvRows', ...
+        'Skipped %d malformed CSV rows in %s.', n_invalid_rows, filename);
+end
+
+opts = detectImportOptions(import_filename);
 opts = setvartype(opts,{'Babs'},'double');
 opts.VariableNamingRule = 'modify';
-paas = readtable(filename,opts);
+paas = readtable(import_filename,opts);
 
 %% Prepare data
 % Time into datetime
@@ -181,3 +193,74 @@ end
 end
 end
 
+
+function [import_filename, cleanup_temp, n_invalid_rows] = ...
+        validated_csv_copy(filename)
+%VALIDATED_CSV_COPY Exclude records whose field count differs from header.
+
+    import_filename = filename;
+    cleanup_temp = [];
+    n_invalid_rows = 0;
+
+    input_fid = fopen(filename, 'r');
+    if input_fid == -1
+        error('Could not open raw PAAS file: %s', filename);
+    end
+    close_input = onCleanup(@() fclose(input_fid));
+
+    header = fgetl(input_fid);
+    if ~ischar(header)
+        error('Raw PAAS file is empty: %s', filename);
+    end
+    expected_commas = sum(header == ',');
+
+    temp_filename = [tempname, '.csv'];
+    output_fid = -1;
+
+    while true
+        row = fgetl(input_fid);
+        if ~ischar(row)
+            break
+        end
+
+        is_valid = sum(row == ',') == expected_commas;
+        if ~is_valid
+            n_invalid_rows = n_invalid_rows + 1;
+        end
+
+        if n_invalid_rows > 0 && output_fid == -1
+            % A malformed row was found. Rewind and construct a clean copy
+            % in a second pass so all earlier valid rows are retained.
+            output_fid = fopen(temp_filename, 'w');
+            if output_fid == -1
+                error('Could not create temporary PAAS import file.');
+            end
+            break
+        end
+    end
+
+    if n_invalid_rows == 0
+        return
+    end
+
+    frewind(input_fid);
+    header = fgetl(input_fid);
+    fprintf(output_fid, '%s\n', header);
+    n_invalid_rows = 0;
+
+    while true
+        row = fgetl(input_fid);
+        if ~ischar(row)
+            break
+        end
+        if sum(row == ',') == expected_commas
+            fprintf(output_fid, '%s\n', row);
+        else
+            n_invalid_rows = n_invalid_rows + 1;
+        end
+    end
+
+    fclose(output_fid);
+    import_filename = temp_filename;
+    cleanup_temp = onCleanup(@() delete(temp_filename));
+end
