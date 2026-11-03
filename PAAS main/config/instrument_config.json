@@ -124,8 +124,6 @@
     "Pallas": {
       "valve_functionality": [[-1, 0], [0, -1]],
       "remove_start_segments_enabled": false,
-      "laser_power_corr": [1.0, 1.0, 0.906, 1.0],
-      "laser_power_corr_period": ["2021-12-21 00:00:00", "2023-12-21 23:59:59"],
       "c_cell_soll_period": ["2021-12-21 00:00:00", "2023-12-21 23:59:59"],
       "interlock_failure_period": [
         ["1904-01-01 00:00:00", "1904-01-01 23:59:59"],
@@ -201,8 +199,6 @@
   "PAAS-3L-01-002": {
     "Ala-Honkajoki": {
       "valve_functionality": [[-1, 0], [0, -1]],
-      "laser_power_corr": [0.8333333333, 1.0, 1.435, 1.435],
-      "laser_power_corr_period": ["2024-02-19 00:00:00", "2024-12-31 23:59:59"],
       "calibration_corr": 0.7984031936,
       "calibration_corr_period": ["2021-12-21 00:00:00", "2024-12-21 23:59:59"],
       "babs_range": [-1e-7, 3e-5]

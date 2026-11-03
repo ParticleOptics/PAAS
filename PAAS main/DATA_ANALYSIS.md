@@ -74,7 +74,6 @@ The resulting configuration can include:
 - phase-angle corrections;
 - interlock-failure periods;
 - timestamp corrections;
-- optional campaign-specific laser-power corrections;
 - input and output directories.
 
 This order is important: a dated or wavelength-specific override is applied
@@ -258,10 +257,7 @@ relative changes in the net signal.
 Changing `corr_method` changes the physical definition of the reported
 signal and should therefore be documented with the analysis.
 
-## 6. Corrections after absorption calculation
-
-`src/processing/apply_corrections.m` applies any explicitly configured,
-period-specific multiplicative laser-power correction to `b_abs`.
+## 6. Standard-temperature correction
 
 `src/physics/correct_to_stp.m` interpolates the measured downstream
 temperature to the sample-block times. The acoustic-cell temperature is

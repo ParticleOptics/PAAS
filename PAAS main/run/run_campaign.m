@@ -43,8 +43,7 @@ end
     calculate_b_abs(paas, cfg.valve_functionality, corr_method, ...
     remove_start_segments_enabled, maximum_bg_pair_gap_hours);
 
-%% 4. Possible data corrections
-b_abs = apply_corrections(b_abs,time,cfg);
+%% 4. Correct absorption to standard temperature
 [b_abs, stp_factor] = correct_to_stp(b_abs, time, paas, false);
 
 %% 5. Compute statistics
