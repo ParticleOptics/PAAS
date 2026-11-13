@@ -11,7 +11,7 @@ instrument_SN = "PAAS_4L_02_004";
 campaign      = "Payerne"; % Hyytiala, Hyytiala_Phase2
 corr_method   = 3; % method to calculate b_abs
 
-time_av = 3; % in hours
+time_av = 2; % in hours
 
 % Plot selection. Each enabled entry creates one consolidated figure.
 plot_options = struct( ...

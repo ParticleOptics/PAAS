@@ -1,0 +1,41 @@
+{
+  "PAAS-4L-02-005": {
+    "Hyytiala": {
+      "data_root": "/path/to/Hyytiala/Data/PAAS",
+      "data_subfolder": "raw data weekly",
+      "output_root_plots": "/path/to/Hyytiala/Data/PAAS/plots",
+      "output_root_data": "/path/to/Hyytiala/Data/PAAS"
+    },
+
+    "Hyytiala_Phase2": {
+      "data_root": "/path/to/Hyytiala/Data/PAAS",
+      "data_subfolder": "raw data weekly new wavelength",
+      "output_root_plots": "/path/to/Hyytiala/Data/PAAS/plots",
+      "output_root_data": "/path/to/Hyytiala/Data/PAAS"
+    },
+
+    "Pallas": {
+      "data_root": "/path/to/Pallas/Data/PAAS",
+      "data_subfolder": "raw data weekly",
+      "output_root_plots": "/path/to/Pallas/Data/PAAS/plots",
+      "output_root_data": "/path/to/Pallas/Data/PAAS"
+    }
+  },
+
+  "PAAS-4L-02-004": {
+    "Payerne": {
+      "data_root": "/path/to/PAAS-4L-02-004",
+      "data_subfolder": "data",
+      "output_root_plots": "/path/to/PAAS-4L-02-004/plots",
+      "output_root_data": "/path/to/PAAS-4L-02-004/data"
+    }
+  },
+
+  "PAAS-3L-01-002": {
+    "Ala-Honkajoki": {
+      "data_root": "/path/to/Ala-Honkajoki",
+      "data_subfolder": "raw_data",
+      "output_root": "/path/to/Ala-Honkajoki/output"
+    }
+  }
+}

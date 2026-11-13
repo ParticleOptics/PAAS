@@ -1,0 +1,10 @@
+# macOS metadata
+.DS_Store
+
+# Machine-specific input and output paths
+PAAS main/config/local_config.json
+
+# Local exploratory characterization analyses
+PAAS characterization/Plot_AllinGas_Frequency_Trend.m
+PAAS characterization/Theoretical_*
+PAAS characterization/Theorethical_*

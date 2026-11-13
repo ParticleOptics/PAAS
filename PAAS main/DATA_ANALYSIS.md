@@ -15,8 +15,10 @@ which corrections come from the instrument configuration.
 2. Check that the instrument and campaign exist in both configuration files:
    - `config/instrument_config.json` contains scientific settings and is
      intended for version control.
-   - `config/local_config.json` contains computer-specific input and output
-     paths and must not be committed.
+   - On first use, copy `config/local_config.example.json` to
+     `config/local_config.json`, then replace the placeholder paths with the
+     computer-specific input and output directories. The resulting
+     `local_config.json` is ignored by Git and must not be committed.
 3. Run `run/run_campaign.m` in MATLAB. The script resolves the project root
    automatically, so it can be launched from the editor or another working
    directory.
@@ -97,8 +99,8 @@ in this order:
 1. normalize the timestamps and assign the input time zone;
 2. apply index-based `manual_time_shifts` used for documented clock or
    daylight-saving discontinuities;
-3. apply `period_time_shifts`, for example after changing the instrument
-   computer from local time to UTC;
+3. apply `period_time_shifts`; an optional `step` applies a shift to every
+   *n*th row within the selected timestamp interval;
 4. convert the time zone when `apply_timezone_conversion` is enabled;
 5. apply a constant offset;
 6. apply a linear clock-drift correction.
@@ -106,6 +108,13 @@ in this order:
 The function prints the number of affected rows and the applied shifts, then
 sorts the data again. Campaign outputs should use the time zone declared in
 the configuration; for the current Hyytiälä analysis this is UTC+2.
+
+The Hyytiälä instrument clock remained in Finnish local time in October
+2026. Summer-time records are therefore shifted by -1 h to fixed UTC+2. At
+the 25 October fallback, the local 03:00--03:59 hour occurs twice; the raw
+records are interleaved after sorting, so `step: 2` shifts only the
+summer-time occurrence. The second 03:00--03:59 occurrence and records from
+04:00 onward require no shift because Finnish winter time is already UTC+2.
 
 ## 4. Corrections applied before absorption calculation
 

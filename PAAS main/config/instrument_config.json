@@ -1,11 +1,11 @@
 {
   "PAAS-4L-02-005": {
     "instrument_defaults": {
-      "c_cell_soll": 71976,
+      "c_cell_soll": 72244,
       "c_cell_soll_overrides": [
         {
           "wavelength_nm": 405,
-          "cell_constant": 63122,
+          "cell_constant": 63327,
           "period": ["2025-08-19 00:00:00", "2026-12-31 23:59:59"],
           "reason": "Wavelength-specific linear-fit C405 after installation of the 785 nm laser and repositioning of all lasers"
         }
@@ -113,9 +113,17 @@
         "period_time_shifts": [
           {
             "start_time": "2026-10-22 00:00:00",
-            "end_time": "2100-12-31 23:59:59",
-            "shift_seconds": 7200,
-            "reason": "Instrument computer permanently changed from UTC+2 local time to UTC after the 21 October 2026 calibration; add two hours to all subsequent timestamps to retain analysis in fixed UTC+2"
+            "end_time": "2026-10-25 02:59:59",
+            "step": 1,
+            "shift_seconds": -3600,
+            "reason": "Instrument computer remained on local Finnish summer time (UTC+3); subtract one hour to retain analysis in fixed UTC+2"
+          },
+          {
+            "start_time": "2026-10-25 03:00:00",
+            "end_time": "2026-10-25 03:59:59",
+            "step": 2,
+            "shift_seconds": -3600,
+            "reason": "Autumn clock change duplicates the local 03:00 hour; shift every other sorted timestamp to separate the summer-time occurrence while retaining fixed UTC+2 output"
           }
         ]
       }

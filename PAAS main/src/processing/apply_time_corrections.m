@@ -67,15 +67,27 @@ function paas = apply_time_corrections(paas, cfg)
                 "InputFormat", "yyyy-MM-dd HH:mm:ss");
             period_end = datetime(s.end_time, ...
                 "InputFormat", "yyyy-MM-dd HH:mm:ss");
-            idx = paas.TimeStamp >= period_start & ...
-                paas.TimeStamp <= period_end;
+            idx = find(paas.TimeStamp >= period_start & ...
+                paas.TimeStamp <= period_end);
+
+            % The repeated hour at the autumn daylight-saving transition is
+            % represented twice in local-clock data. After sorting, the two
+            % occurrences are interleaved; selecting every other row shifts
+            % only the summer-time occurrence. Ordinary period corrections
+            % use the default step of one.
+            period_step = 1;
+            if isfield(s, "step") && ~isempty(s.step)
+                period_step = s.step;
+            end
+            idx = idx(1:period_step:end);
 
             paas.TimeStamp(idx) = paas.TimeStamp(idx) + ...
                 seconds(s.shift_seconds);
 
             fprintf(['\nPeriod shift applied: %s to %s, ' ...
-                '%+d seconds (%d rows)\n'], ...
-                s.start_time, s.end_time, s.shift_seconds, sum(idx));
+                'step %d, %+d seconds (%d rows)\n'], ...
+                s.start_time, s.end_time, period_step, ...
+                s.shift_seconds, numel(idx));
         end
     end
 
